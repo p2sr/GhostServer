@@ -5,6 +5,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="GhostServer">
+      <UniqueIdentifier>{5a82b14a-b59c-4284-a461-bc3c8ceb78ef}</UniqueIdentifier>
+    </Filter>
     <Filter Include="lib">
       <UniqueIdentifier>{053c40f7-42d0-40dd-a0f2-54c5bd53f3a8}</UniqueIdentifier>
     </Filter>
@@ -31,6 +34,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>GhostServer</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>GhostServer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>GhostServer</Filter>
+    </ClInclude>
     <ClInclude Include="..\lib\SFML\include\SFML\Config.hpp">
       <Filter>lib\SFML</Filter>
     </ClInclude>

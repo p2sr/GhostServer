@@ -138,6 +138,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="NetworkManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="..\lib\SFML\include\SFML\Audio.hpp" />
     <ClInclude Include="..\lib\SFML\include\SFML\Audio\AlResource.hpp" />
     <ClInclude Include="..\lib\SFML\include\SFML\Audio\Export.hpp" />
@@ -270,6 +274,7 @@
     <ClInclude Include="..\lib\TGUI\include\TGUI\to_string.hpp" />
     <ClInclude Include="..\lib\TGUI\include\TGUI\Vector2f.hpp" />
     <ClInclude Include="..\lib\TGUI\include\TGUI\Widget.hpp" />
+    <ClInclude Include="NetworkManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\lib\SFML\include\SFML\Audio\SoundFileFactory.inl" />
