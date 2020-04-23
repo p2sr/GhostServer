@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+src/.vs/GhostServer/v15/.suo
+*.db
+*.ilk
+*.pdb
+src/.vs/GhostServer/v16/.suo
+*.opendb
+*.ipch
+*.log
+*.tlog
+*.idb
+*.iobj
+*.ipdb
