@@ -365,7 +365,7 @@ void NetworkManager::CheckNewConnection()
 }
 
 //Disconnect a player
-std::string NetworkManager::Disconnect(const sf::Uint32& ID, bool hasCrashed)
+bool NetworkManager::Disconnect(const sf::Uint32& ID, bool hasCrashed)
 {
     sf::IpAddress ip_sender = sf::IpAddress(ID);
     std::string disconnectedName;
@@ -382,7 +382,7 @@ std::string NetworkManager::Disconnect(const sf::Uint32& ID, bool hasCrashed)
             }
         }
         if (id == -1) {
-            return "";
+            return false;
         }
 
         std::unique_lock<std::mutex> lck(mutex2);
@@ -406,7 +406,7 @@ std::string NetworkManager::Disconnect(const sf::Uint32& ID, bool hasCrashed)
         }
 
         if (id == -1) {
-            return "";
+            return false;
         }
 
         std::unique_lock<std::mutex> lck(mutex2);
@@ -439,7 +439,7 @@ std::string NetworkManager::Disconnect(const sf::Uint32& ID, bool hasCrashed)
     e << HEADER::DISCONNECT << disconnectedName;
     this->eventList.push_back(e);
 
-    return disconnectedName;
+    return true;
 }
 
 //Stop the server
@@ -516,6 +516,17 @@ void NetworkManager::SetCommandPreCoutdown(std::string& commands)
 void NetworkManager::SetCommandPostCoutdown(std::string& commands)
 {
     this->commandPostCountdown = commands;
+}
+
+sf::Uint32 NetworkManager::GetID(std::string& name)
+{
+    for (auto& it : this->player_pool) {
+        if (it.second.name == name) {
+            return it.first.toInteger();
+		}
+	}
+
+	return -1;
 }
 
 void NetworkManager::GetEvent(std::vector<sf::Packet>& e)

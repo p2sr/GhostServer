@@ -12,7 +12,8 @@ enum class COMMANDTYPE {
     PRE_COUNTDOWN,
     POST_COUNTDOWN,
     FONTSIZE,
-    HELP
+    HELP,
+    GET_ID
 };
 
 struct Command {
@@ -52,10 +53,14 @@ std::string HandleCommand(std::string input, NetworkManager& network, tgui::Edit
             return "Not enough argument -> " + command->second.helpString;
         }
 
-        sf::IpAddress ip = args[1];
-        std::string name = network.Disconnect(ip.toInteger());
-        if (name.empty()) {
-            return "No player corresponding to the ip !";
+        sf::Uint32 ID = network.GetID(args[1]);
+        if (ID != -1) {
+            bool succes = network.Disconnect(ID);
+            if (!succes) {
+                return "Failed to disconnect \"" + args[1] + "\" player !";
+			}
+        } else {
+            return "No \"" + args[1] + "\" player found. Are you sure about the name ?";
         }
     } else if (command->second.commandType == COMMANDTYPE::PRE_COUNTDOWN) {
         std::string commands = ""; //If there's multiple commands
@@ -136,6 +141,7 @@ int main()
     commandList.insert({ "countdown", { COMMANDTYPE::COUNTDOWN, "countdown <time> : Starts a countdown for all the players. Will use setprecommand and setpostcommand is those were used" } });
     commandList.insert({ "fontsize", { COMMANDTYPE::FONTSIZE, "fontsize <size> : Change the size of the font in the console" } });
     commandList.insert({ "help", { COMMANDTYPE::HELP, "help [command] : Prints help string either of the specifed command or all the commands" } });
+    commandList.insert({ "GetID", { COMMANDTYPE::GET_ID, "GetID <player_name> : Prints the ID of the player" } });
 
     sf::RenderWindow window{
         { 800, 600 }, "Ghost Server"

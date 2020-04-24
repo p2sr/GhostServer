@@ -87,7 +87,7 @@ public:
     void UDPListening();
 
     void CheckNewConnection();
-    std::string Disconnect(const sf::Uint32& ID, bool hasCrashed = false);
+    bool Disconnect(const sf::Uint32& ID, bool hasCrashed = false);
     void StopServer();
     void ChangeMap(const sf::Uint32& ID, const std::string& map);
     void ChangeModel(const sf::Uint32& ID, const std::string& modelName);
@@ -95,6 +95,7 @@ public:
     void StartCountdown(sf::Uint32 time);
     void SetCommandPreCoutdown(std::string& commands);
     void SetCommandPostCoutdown(std::string& commands);
+    sf::Uint32 GetID(std::string& name);
 
     void GetEvent(std::vector<sf::Packet>& e);
 };
