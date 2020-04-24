@@ -275,7 +275,11 @@ void NetworkManager::TCPListening()
                                     packet_confirm << HEADER::COUNTDOWN << sf::Uint8(1);
                                     this->socket_pool[id]->send(packet_confirm);
                                 }
-                            }
+                            } else if (header == HEADER::MODEL_CHANGE) {
+                                std::string modelName;
+                                packet >> modelName;
+                                this->ChangeModel(this->socket_pool[id]->getRemoteAddress().toInteger(), modelName);
+							}
                         }
                     } catch (const std::exception& exept) {
                         sf::Packet e;
@@ -463,6 +467,18 @@ void NetworkManager::ChangeMap(const sf::Uint32& ID, const std::string& map)
 {
     sf::Packet packet;
     packet << HEADER::MAP_CHANGE << ID << map;
+    for (auto& socket : this->socket_pool) {
+        if (socket->getRemoteAddress().toInteger() != ID) {
+            socket->send(packet);
+        }
+    }
+}
+
+//Signal map change
+void NetworkManager::ChangeModel(const sf::Uint32& ID, const std::string& modelName)
+{
+    sf::Packet packet;
+    packet << HEADER::MODEL_CHANGE << ID << modelName;
     for (auto& socket : this->socket_pool) {
         if (socket->getRemoteAddress().toInteger() != ID) {
             socket->send(packet);

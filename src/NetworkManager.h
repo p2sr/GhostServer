@@ -24,6 +24,7 @@ enum class HEADER {
     MESSAGE,
     COUNTDOWN,
     UPDATE,
+    MODEL_CHANGE
 };
 
 struct DataGhost {
@@ -89,6 +90,7 @@ public:
     std::string Disconnect(const sf::Uint32& ID, bool hasCrashed = false);
     void StopServer();
     void ChangeMap(const sf::Uint32& ID, const std::string& map);
+    void ChangeModel(const sf::Uint32& ID, const std::string& modelName);
     void SendMessage(const sf::Uint32& ID, const std::string& message);
     void StartCountdown(sf::Uint32 time);
     void SetCommandPreCoutdown(std::string& commands);
