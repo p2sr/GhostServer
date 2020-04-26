@@ -13,7 +13,6 @@ enum class COMMANDTYPE {
     POST_COUNTDOWN,
     FONTSIZE,
     HELP,
-    GET_ID
 };
 
 struct Command {
@@ -62,7 +61,7 @@ std::string HandleCommand(std::string input, NetworkManager& network, tgui::Edit
             bool succes = network.Disconnect(ID);
             if (!succes) {
                 return "Failed to disconnect \"" + args[1] + "\" player !";
-			}
+            }
         } else {
             return "No \"" + args[1] + "\" player found. Are you sure about the name ?";
         }
@@ -145,7 +144,6 @@ int main()
     commandList.insert({ "countdown", { COMMANDTYPE::COUNTDOWN, "countdown <time> : Starts a countdown for all the players. Will use setprecommand and setpostcommand is those were used" } });
     commandList.insert({ "fontsize", { COMMANDTYPE::FONTSIZE, "fontsize <size> : Change the size of the font in the console" } });
     commandList.insert({ "help", { COMMANDTYPE::HELP, "help [command] : Prints help string either of the specifed command or all the commands" } });
-    commandList.insert({ "GetID", { COMMANDTYPE::GET_ID, "GetID <player_name> : Prints the ID of the player" } });
 
     sf::RenderWindow window{
         { 800, 600 }, "Ghost Server"
