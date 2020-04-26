@@ -1,6 +1,7 @@
 #include "NetworkManager.h"
 #include <SFML/Network.hpp>
 #include <TGUI/TGUI.hpp>
+#include <fstream>
 
 enum class COMMANDTYPE {
     PING,
@@ -156,12 +157,31 @@ int main()
     tgui::TextBox::Ptr log = gui.get<tgui::TextBox>("log");
     log->setTextSize(16);
 
-    NetworkManager network(53000);
+    std::ifstream setup;
+    setup.open("port.cfg", std::ifstream::in);
+    unsigned short port = 53000;
+    if (setup.is_open()) {
+        std::string line;
+        if (std::getline(setup, line)) {
+            port = std::stoi(line);
+        } else {
+            log->addText("Error : Can't read port number ! Port will be set to default value (53000)\n");
+            port = 53000;
+        }
+    } else {
+        log->addText("Error : Can't open port.cfg ! Port will be set to default value (53000)\n");
+        port = 53000;
+    }
+
+    NetworkManager network(port);
     if (!network.IsConnected()) {
         log->addText("Error : Can't connect with " + network.GetPublicIP().toString() + " : " + std::to_string(network.GetPort()) + " !\n");
+        setup.close();
         window.close();
         return 0;
     }
+
+    setup.close();
 
     log->addText("Server started on <" + network.GetPublicIP().toString() + "> (Local : " + network.GetLocalIP().toString() + ") ; Port: " + std::to_string(network.GetPort()) + ">\n");
 
