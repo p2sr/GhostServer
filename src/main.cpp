@@ -39,9 +39,13 @@ std::string HandleCommand(std::string input, NetworkManager& network, tgui::Edit
     std::vector<std::string> args;
     std::stringstream check(input);
     std::string tmp;
+
+    std::getline(check, tmp, ' ');
+    args.push_back(LowerString(tmp));
     while (std::getline(check, tmp, ' ')) {
-        args.push_back(LowerString(tmp));
+        args.push_back(tmp);
     }
+
     auto command = commandList.find(args[0]);
     if (command == commandList.end()) {
         return "\"" + args[0] + "\" is not an existing command. Type \"help\" to see all the available commands";
