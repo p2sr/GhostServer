@@ -279,7 +279,7 @@ void NetworkManager::TCPListening()
                                 std::string modelName;
                                 packet >> modelName;
                                 this->ChangeModel(this->socket_pool[id]->getRemoteAddress().toInteger(), modelName);
-							}
+                            }
                         }
                     } catch (const std::exception& exept) {
                         sf::Packet e;
@@ -523,10 +523,10 @@ sf::Uint32 NetworkManager::GetID(std::string& name)
     for (auto& it : this->player_pool) {
         if (it.second.name == name) {
             return it.first.toInteger();
-		}
-	}
+        }
+    }
 
-	return -1;
+    return -1;
 }
 
 void NetworkManager::GetEvent(std::vector<sf::Packet>& e)
