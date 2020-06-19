@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>FrenchSaves10TicksBtw</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -25,7 +25,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,2">
+        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,0">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="spacing">
@@ -39,16 +39,6 @@
            </property>
            <item>
             <widget class="QTextBrowser" name="textBrowser"/>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBox">
-             <property name="editable">
-              <bool>true</bool>
-             </property>
-             <property name="frame">
-              <bool>true</bool>
-             </property>
-            </widget>
            </item>
            <item>
             <widget class="QPushButton" name="serverButton">
@@ -178,27 +168,15 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Max players</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="1">
-           <widget class="QSpinBox" name="maxPlayers"/>
-          </item>
-          <item row="2" column="0">
            <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Only use TCP :</string>
+            <property name="font">
+             <font>
+              <pointsize>13</pointsize>
+             </font>
             </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="tcpOnly">
             <property name="text">
-             <string/>
+             <string>More settings comming soon TM (maybe...)</string>
             </property>
            </widget>
           </item>
