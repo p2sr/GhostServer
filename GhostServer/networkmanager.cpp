@@ -1,10 +1,16 @@
 #include "networkmanager.h"
 
 #include <memory>
+#include <chrono>
+#include <cstdlib>
 
 #include <SFML/Network.hpp>
 
 #include <QVector>
+
+#define HEARTBEAT_RATE 1000
+
+static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 
 //DataGhost
 
@@ -110,7 +116,7 @@ void NetworkManager::StopServer()
 void NetworkManager::DisconnectPlayer(Client& c)
 {
     sf::Packet packet;
-    packet << c.IP.toInteger() << HEADER::DISCONNECT;
+    packet << HEADER::DISCONNECT << c.ID;
     int id = 0;
     for (; id < this->clients.size(); ++id) {
         if (this->clients[id].IP != c.IP) {
@@ -196,6 +202,7 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
+    client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
 
     this->selector.add(*client.tcpSocket);
 
@@ -297,8 +304,18 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
 
         break;
     }
-    case HEADER::HEART_BEAT:
-        break;
+    case HEADER::HEART_BEAT: {
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            uint32_t token;
+            packet >> token;
+            if (token == client->heartbeatToken) {
+                // Good heartbeat!
+                client->returnedHeartbeat = true;
+            }
+            break;
+        }
+    }
     case HEADER::MESSAGE: {
         for (auto& client : this->clients) {
             client.tcpSocket->send(packet);
@@ -350,6 +367,11 @@ void NetworkManager::RunServer()
     this->clock.restart();
 
     while (this->isRunning) {
+        auto now = std::chrono::steady_clock::now();
+        if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE)) {
+            this->DoHeartbeats();
+            lastHeartbeat = now;
+        }
 
         //UDP
         std::vector<sf::Packet> buffer;
@@ -376,4 +398,21 @@ void NetworkManager::RunServer()
     }
 
     this->StopServer();
+}
+
+void NetworkManager::DoHeartbeats()
+{
+    for (auto& client : this->clients) {
+        if (!client.returnedHeartbeat) {
+            // Client didn't return heartbeat in time; sever connection
+            this->DisconnectPlayer(client);
+        } else {
+            // Send a heartbeat
+            client.heartbeatToken = rand();
+            client.returnedHeartbeat = false;
+            sf::Packet packet;
+            packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
+            client.tcpSocket->send(packet);
+        }
+    }
 }
