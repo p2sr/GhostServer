@@ -43,3 +43,9 @@
 GhostServer/Debug/
 GhostServer/Release/
 .vs/GhostServer/v16/.suo
+
+# Linux build artifacts
+GhostServer/ui_mainwindow.h
+GhostServer/*_qt.cpp
+config.mk
+ghost_server
