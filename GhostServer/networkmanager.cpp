@@ -344,8 +344,14 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
         break;
     }
     case HEADER::MODEL_CHANGE: {
-        for (auto& client : this->clients) {
-            client.tcpSocket->send(packet);
+        std::string modelName;
+        packet >> modelName;
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            client->modelName = modelName;
+            for (auto& other : this->clients) {
+                other.tcpSocket->send(packet);
+            }
         }
         break;
     }
