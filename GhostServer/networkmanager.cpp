@@ -305,6 +305,7 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
         if (client) {
             std::string map;
             packet >> map;
+            client->currentMap = map;
             emit this->OnNewEvent(QString::fromStdString(client->name) + " is now on " + QString::fromStdString(map));
         }
 
