@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PKGS='Qt5Core Qt5Gui Qt5Widgets sfml-network'
+
+pkg_not_found() {
+	echo 'pkg-config could not find a required package.'
+	exit 1
+}
+
+pkg-config $PKGS || pkg_not_found
+
+set -f
+cxxflags=$(pkg-config --cflags $PKGS)
+ldflags=$(pkg-config --libs $PKGS)
+set +f
+
+{
+	echo "CXXFLAGS+=$cxxflags"
+	echo "LDFLAGS+=$ldflags"
+} >config.mk

@@ -1,10 +1,17 @@
 #include "networkmanager.h"
 
 #include <memory>
+#include <chrono>
+#include <cstdlib>
+#include <queue>
 
 #include <SFML/Network.hpp>
 
 #include <QVector>
+
+#define HEARTBEAT_RATE 1000
+
+static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 
 //DataGhost
 
@@ -97,8 +104,8 @@ void NetworkManager::StopServer()
         return;
     }
 
-    for (auto& client : this->clients) {
-        this->DisconnectPlayer(client);
+    while (this->clients.size() > 0) {
+        this->DisconnectPlayer(this->clients.back());
     }
 
     this->isRunning = false;
@@ -110,8 +117,9 @@ void NetworkManager::StopServer()
 void NetworkManager::DisconnectPlayer(Client& c)
 {
     sf::Packet packet;
-    packet << c.IP.toInteger() << HEADER::DISCONNECT;
+    packet << HEADER::DISCONNECT << c.ID;
     int id = 0;
+    int toErase = -1;
     for (; id < this->clients.size(); ++id) {
         if (this->clients[id].IP != c.IP) {
             this->clients[id].tcpSocket->send(packet);
@@ -119,8 +127,12 @@ void NetworkManager::DisconnectPlayer(Client& c)
             emit this->OnNewEvent("Player " + QString::fromStdString(this->clients[id].name) + " has disconnected !");
             this->selector.remove(*this->clients[id].tcpSocket);
             this->clients[id].tcpSocket->disconnect();
-            this->clients.erase(this->clients.begin() + id);
+            toErase = id;
         }
+    }
+
+    if (toErase != -1) {
+        this->clients.erase(this->clients.begin() + toErase);
     }
 }
 
@@ -196,6 +208,7 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
+    client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
 
     this->selector.add(*client.tcpSocket);
 
@@ -292,13 +305,24 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
         if (client) {
             std::string map;
             packet >> map;
+            client->currentMap = map;
             emit this->OnNewEvent(QString::fromStdString(client->name) + " is now on " + QString::fromStdString(map));
         }
 
         break;
     }
-    case HEADER::HEART_BEAT:
-        break;
+    case HEADER::HEART_BEAT: {
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            uint32_t token;
+            packet >> token;
+            if (token == client->heartbeatToken) {
+                // Good heartbeat!
+                client->returnedHeartbeat = true;
+            }
+            break;
+        }
+    }
     case HEADER::MESSAGE: {
         for (auto& client : this->clients) {
             client.tcpSocket->send(packet);
@@ -321,8 +345,14 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
         break;
     }
     case HEADER::MODEL_CHANGE: {
-        for (auto& client : this->clients) {
-            client.tcpSocket->send(packet);
+        std::string modelName;
+        packet >> modelName;
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            client->modelName = modelName;
+            for (auto& other : this->clients) {
+                other.tcpSocket->send(packet);
+            }
         }
         break;
     }
@@ -350,6 +380,11 @@ void NetworkManager::RunServer()
     this->clock.restart();
 
     while (this->isRunning) {
+        auto now = std::chrono::steady_clock::now();
+        if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE)) {
+            this->DoHeartbeats();
+            lastHeartbeat = now;
+        }
 
         //UDP
         std::vector<sf::Packet> buffer;
@@ -360,20 +395,55 @@ void NetworkManager::RunServer()
             if (this->selector.isReady(this->listener)) {
                 this->CheckConnection(); //A player wants to connect
             } else {
+                std::queue<Client*> toDisconnect;
+
                 for (int i = 0; i < this->clients.size(); ++i) {
                     if (this->selector.isReady(*this->clients[i].tcpSocket)) {
                         sf::Packet packet;
                         sf::Socket::Status status = this->clients[i].tcpSocket->receive(packet);
                         if (status == sf::Socket::Disconnected) {
-                            this->DisconnectPlayer(this->clients[i]);
+                            toDisconnect.push(&this->clients[i]);
                             continue;
                         }
                         this->TreatTCP(packet);
                     }
+                }
+
+                while (!toDisconnect.empty()) {
+                    this->DisconnectPlayer(*toDisconnect.front());
+                    toDisconnect.pop();
                 }
             }
         }
     }
 
     this->StopServer();
+}
+
+void NetworkManager::DoHeartbeats()
+{
+    // We don't disconnect clients in the loop; else, the loop will have
+    // UB
+    std::queue<Client*> toDisconnect;
+
+    for (auto& client : this->clients) {
+        if (!client.returnedHeartbeat) {
+            // Client didn't return heartbeat in time; sever connection
+            toDisconnect.push(&client);
+        } else {
+            // Send a heartbeat
+            client.heartbeatToken = rand();
+            client.returnedHeartbeat = false;
+            sf::Packet packet;
+            packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
+            if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
+                toDisconnect.push(&client);
+            }
+        }
+    }
+
+    while (!toDisconnect.empty()) {
+        this->DisconnectPlayer(*toDisconnect.front());
+        toDisconnect.pop();
+    }
 }

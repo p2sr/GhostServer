@@ -7,6 +7,7 @@
 #include <mutex>
 #include <atomic>
 #include <thread>
+#include <cstdint>
 
 #include <QObject>
 
@@ -46,6 +47,8 @@ struct Client {
     std::string currentMap;
     std::unique_ptr<sf::TcpSocket> tcpSocket;
     bool TCP_only;
+    uint32_t heartbeatToken;
+    bool returnedHeartbeat;
 };
 
 class NetworkManager : public QObject
@@ -69,6 +72,8 @@ private:
 	std::thread serverThread;
 
 	sf::Clock clock;
+
+    void DoHeartbeats();
 
 public:
 	sf::UdpSocket udpSocket;
