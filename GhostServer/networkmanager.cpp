@@ -9,7 +9,7 @@
 
 #include <QVector>
 
-#define HEARTBEAT_RATE 1000
+#define HEARTBEAT_RATE 5000
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 
