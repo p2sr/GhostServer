@@ -10,8 +10,10 @@
 #include <QVector>
 
 #define HEARTBEAT_RATE 5000
+#define HEARTBEAT_RATE_UDP 1000 // We don't actually respond to these, they're just to keep the connection alive
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
+static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
 
 //DataGhost
 
@@ -209,6 +211,7 @@ void NetworkManager::CheckConnection()
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
+    client.missedLastHeartbeat = false;
 
     this->selector.add(*client.tcpSocket);
 
@@ -386,6 +389,17 @@ void NetworkManager::RunServer()
             lastHeartbeat = now;
         }
 
+        if (now > lastHeartbeatUdp + std::chrono::milliseconds(HEARTBEAT_RATE_UDP)) {
+            for (auto &client : this->clients) {
+                if (!client.TCP_only) {
+                    sf::Packet packet;
+                    packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(0);
+                    this->udpSocket.send(packet, client.IP, client.port);
+                }
+            }
+            lastHeartbeatUdp = now;
+        }
+
         //UDP
         std::vector<sf::Packet> buffer;
         this->ReceiveUDPUpdates(buffer);
@@ -427,12 +441,13 @@ void NetworkManager::DoHeartbeats()
     std::queue<Client*> toDisconnect;
 
     for (auto& client : this->clients) {
-        if (!client.returnedHeartbeat) {
+        if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
             toDisconnect.push(&client);
         } else {
             // Send a heartbeat
             client.heartbeatToken = rand();
+            client.missedLastHeartbeat = !client.returnedHeartbeat;
             client.returnedHeartbeat = false;
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);

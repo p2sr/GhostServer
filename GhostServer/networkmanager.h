@@ -49,6 +49,7 @@ struct Client {
     bool TCP_only;
     uint32_t heartbeatToken;
     bool returnedHeartbeat;
+    bool missedLastHeartbeat;
 };
 
 class NetworkManager : public QObject
