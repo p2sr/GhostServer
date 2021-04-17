@@ -94,8 +94,8 @@ public:
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
 
 	void CheckConnection();
-	void ReceiveUDPUpdates(std::vector<sf::Packet>& buffer);
-	void TreatUDP(std::vector<sf::Packet>& buffer);
+	void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
+	void TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void TreatTCP(sf::Packet& packet);
 
 signals:
