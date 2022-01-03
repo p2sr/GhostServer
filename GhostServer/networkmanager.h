@@ -87,6 +87,7 @@ public:
 	sf::UdpSocket udpSocket;
     NetworkManager();
 	std::vector<Client> clients;
+	std::vector<sf::IpAddress> bannedIps;
 
     Client* GetClientByID(sf::Uint32 ID);
 
@@ -94,7 +95,7 @@ public:
 	void StopServer();
 	void RunServer();
 
-    bool IsAlreadyConnected(const sf::IpAddress &ip);
+    bool ShouldBlockConnection(const sf::IpAddress &ip);
     void DisconnectPlayer(Client &client);
     void DisconnectPlayer(sf::Uint32 ID);
     std::vector<sf::Uint32> GetPlayerIDByName(std::string name);
@@ -104,6 +105,8 @@ public:
 	void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void TreatTCP(sf::Packet& packet);
+
+	void BanClientIP(int id);
 
 #ifdef GHOST_GUI
 signals:

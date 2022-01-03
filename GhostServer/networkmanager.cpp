@@ -173,13 +173,17 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
     }
 }
 
-bool NetworkManager::IsAlreadyConnected(const sf::IpAddress& ip)
+bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
 {
-    if (std::find_if(this->clients.begin(), this->clients.end(), [&ip](const Client& c) { return ip == c.IP; }) == this->clients.end()) {
-        return false;
+    if (std::find_if(this->clients.begin(), this->clients.end(), [&ip](const Client& c) { return ip == c.IP; }) != this->clients.end()) {
+        return true;
     }
 
-    return true;
+		for (auto banned : this->bannedIps) {
+			if (ip == banned) return true;
+		}
+
+    return false;
 }
 
 void NetworkManager::CheckConnection()
@@ -191,7 +195,7 @@ void NetworkManager::CheckConnection()
         return;
     }
 
-    if (this->IsAlreadyConnected(client.tcpSocket->getRemoteAddress())) {
+    if (this->ShouldBlockConnection(client.tcpSocket->getRemoteAddress())) {
         return;
     }
 
@@ -385,6 +389,14 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
     default:
         break;
     }
+}
+
+void NetworkManager::BanClientIP(int id) {
+	auto cl = this->GetClientByID(id);
+	if (cl) {
+		this->bannedIps.push_back(cl->IP);
+		this->DisconnectPlayer(id);
+	}
 }
 
 //Threaded function

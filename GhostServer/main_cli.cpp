@@ -13,6 +13,8 @@ static enum {
 	CMD_COUNTDOWN_SET,
 	CMD_DISCONNECT,
 	CMD_DISCONNECT_ID,
+	CMD_BAN,
+	CMD_BAN_ID,
 } g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
@@ -49,6 +51,8 @@ static void handle_cmd(char *line) {
 			puts("  countdown        start a countdown");
 			puts("  disconnect       disconnect a client by name");
 			puts("  disconnect_id    disconnect a client by ID");
+			puts("  ban              ban connections from a certain IP by ghost name");
+			puts("  ban_id           ban connections from a certain IP by ghost ID");
 			return;
 		}
 
@@ -102,6 +106,20 @@ static void handle_cmd(char *line) {
 			return;
 		}
 
+		if (!strcmp(line, "ban")) {
+			g_current_cmd = CMD_BAN;
+			fputs("Name of player to ban: ", stdout);
+			fflush(stdout);
+			return;
+		}
+
+		if (!strcmp(line, "ban_id")) {
+			g_current_cmd = CMD_BAN_ID;
+			fputs("ID of player to ban: ", stdout);
+			fflush(stdout);
+			return;
+		}
+
 		printf("Unknown command: '%s'\n", line);
 		return;
 
@@ -138,21 +156,37 @@ static void handle_cmd(char *line) {
 
 	case CMD_DISCONNECT:
 		g_current_cmd = CMD_NONE;
-		if (len == 0) return;
-		{
+		if (len != 0) {
 			auto players = g_network.GetPlayerIDByName(std::string(line));
 			for (auto id : players) g_network.DisconnectPlayer(id);
+			printf("Disconnected player '%s'\n", line);
 		}
-		printf("Disconnected player '%s'\n", line);
 		return;
 
 	case CMD_DISCONNECT_ID:
 		g_current_cmd = CMD_NONE;
-		if (len == 0) return;
-		{
+		if (len != 0) {
 			int id = atoi(line);
 			g_network.DisconnectPlayer(id);
 			printf("Disconnected player ID %d\n", id);
+		}
+		return;
+
+	case CMD_BAN:
+		g_current_cmd = CMD_NONE;
+		if (len != 0) {
+			auto players = g_network.GetPlayerIDByName(std::string(line));
+			for (auto id : players) g_network.BanClientIP(id);
+			printf("Banned player '%s'\n", line);
+		}
+		return;
+
+	case CMD_BAN_ID:
+		g_current_cmd = CMD_NONE;
+		if (len != 0) {
+			int id = atoi(line);
+			g_network.BanClientIP(id);
+			printf("Banned player ID %d\n", id);
 		}
 		return;
 	}
