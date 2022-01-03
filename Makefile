@@ -28,10 +28,10 @@ clean:
 -include $(DEPS)
 
 ghost_server: $(SDIR)/ui_mainwindow.h $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) -o $@
+	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 
 ghost_server_cli: $(OBJS_CLI)
-	$(CXX) $(LDFLAGS_CLI) $(OBJS_CLI) -o $@
+	$(CXX) $(OBJS_CLI) $(LDFLAGS_CLI) -o $@
 
 $(ODIR)/%.o: $(SDIR)/%.cpp
 	@mkdir -p $(dir $@)
