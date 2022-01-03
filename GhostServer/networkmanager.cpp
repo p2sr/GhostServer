@@ -99,7 +99,7 @@ bool NetworkManager::StartServer(const int port)
     this->serverThread = std::thread(&NetworkManager::RunServer, this);
     this->serverThread.detach();
 
-    GHOST_LOG("Server started on " + this->serverIP.toString() + "(public IP : " + sf::IpAddress::getPublicAddress().toString() + ") : " + std::to_string(this->serverPort));
+    GHOST_LOG("Server started on " + this->serverIP.toString() + "(public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
 
     return true;
 }
@@ -118,7 +118,7 @@ void NetworkManager::StopServer()
     this->isRunning = false;
     this->clients.clear();
 
-    GHOST_LOG("Server stopped !");
+    GHOST_LOG("Server stopped!");
 }
 
 void NetworkManager::DisconnectPlayer(Client& c)
@@ -241,7 +241,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    GHOST_LOG("New player: " + client.name + " (" + std::to_string(client.port) + ")");
+    GHOST_LOG("New player: " + client.name + " @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 }
