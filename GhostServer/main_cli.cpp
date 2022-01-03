@@ -1,5 +1,6 @@
 #include "networkmanager.h"
 #include <signal.h>
+#include <unistd.h>
 
 static volatile int g_should_stop = 0;
 
@@ -12,7 +13,7 @@ int main(int argc, char **argv) {
 
 	puts("Server starting up");
 	nm.StartServer(53000);
-	while (!g_should_stop);
+	while (!g_should_stop) usleep(50000);
 	puts("Server shutting down");
 	nm.StopServer();
 
