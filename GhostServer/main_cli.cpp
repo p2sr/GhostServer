@@ -12,6 +12,7 @@ static enum {
 	CMD_NONE,
 	CMD_COUNTDOWN_SET,
 	CMD_DISCONNECT,
+	CMD_DISCONNECT_ID,
 } g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
@@ -41,11 +42,25 @@ static void handle_cmd(char *line) {
 
 		if (!strcmp(line, "help")) {
 			puts("Available commands:");
-			puts("  quit");
-			puts("  help");
-			puts("  countdown_set");
-			puts("  countdown");
-			puts("  disconnect");
+			puts("  help             show this list");
+			puts("  quit             terminate the server");
+			puts("  list             list all the currently connected clients");
+			puts("  countdown_set    set the pre/post cmds and countdown duration");
+			puts("  countdown        start a countdown");
+			puts("  disconnect       disconnect a client by name");
+			puts("  disconnect_id    disconnect a client by ID");
+			return;
+		}
+
+		if (!strcmp(line, "list")) {
+			if (g_network.clients.empty()) {
+				puts("No clients");
+			} else {
+				puts("Clients:");
+				for (auto &cl : g_network.clients) {
+					printf("  %-3d %s @ %s:%d\n", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
+				}
+			}
 			return;
 		}
 
@@ -76,6 +91,13 @@ static void handle_cmd(char *line) {
 		if (!strcmp(line, "disconnect")) {
 			g_current_cmd = CMD_DISCONNECT;
 			fputs("Name of player to disconnect: ", stdout);
+			fflush(stdout);
+			return;
+		}
+
+		if (!strcmp(line, "disconnect_id")) {
+			g_current_cmd = CMD_DISCONNECT_ID;
+			fputs("ID of player to disconnect: ", stdout);
 			fflush(stdout);
 			return;
 		}
@@ -117,9 +139,21 @@ static void handle_cmd(char *line) {
 	case CMD_DISCONNECT:
 		g_current_cmd = CMD_NONE;
 		if (len == 0) return;
-		auto players = g_network.GetPlayerIDByName(std::string(line));
-		for (auto id : players) g_network.DisconnectPlayer(id);
+		{
+			auto players = g_network.GetPlayerIDByName(std::string(line));
+			for (auto id : players) g_network.DisconnectPlayer(id);
+		}
 		printf("Disconnected player '%s'\n", line);
+		return;
+
+	case CMD_DISCONNECT_ID:
+		g_current_cmd = CMD_NONE;
+		if (len == 0) return;
+		{
+			int id = atoi(line);
+			g_network.DisconnectPlayer(id);
+			printf("Disconnected player ID %d\n", id);
+		}
 		return;
 	}
 }
