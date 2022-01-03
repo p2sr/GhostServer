@@ -7,7 +7,13 @@
 
 #include <SFML/Network.hpp>
 
+#ifdef GHOST_GUI
 #include <QVector>
+#define GHOST_LOG(x) emit this->OnNewEvent(QString::fromStdString(x))
+#else
+#include <stdio.h>
+#define GHOST_LOG(x) printf("[LOG] %s\n", std::string(x).c_str())
+#endif
 
 #define HEARTBEAT_RATE 5000
 #define HEARTBEAT_RATE_UDP 1000 // We don't actually respond to these, they're just to keep the connection alive
@@ -93,8 +99,7 @@ bool NetworkManager::StartServer(const int port)
     this->serverThread = std::thread(&NetworkManager::RunServer, this);
     this->serverThread.detach();
 
-    emit this->OnNewEvent(QString("Server started on ") + QString::fromStdString(this->serverIP.toString())
-        + "(public IP : " + QString::fromStdString(sf::IpAddress::getPublicAddress().toString()) + ") : " + QString::number(this->serverPort));
+    GHOST_LOG("Server started on " + this->serverIP.toString() + "(public IP : " + sf::IpAddress::getPublicAddress().toString() + ") : " + std::to_string(this->serverPort));
 
     return true;
 }
@@ -113,7 +118,7 @@ void NetworkManager::StopServer()
     this->isRunning = false;
     this->clients.clear();
 
-    emit this->OnNewEvent(QString("Server stopped !"));
+    GHOST_LOG("Server stopped !");
 }
 
 void NetworkManager::DisconnectPlayer(Client& c)
@@ -124,9 +129,10 @@ void NetworkManager::DisconnectPlayer(Client& c)
     int toErase = -1;
     for (; id < this->clients.size(); ++id) {
         if (this->clients[id].IP != c.IP) {
+            GHOST_LOG("Inform " + this->clients[id].name + " of disconnect");
             this->clients[id].tcpSocket->send(packet);
         } else {
-            emit this->OnNewEvent("Player " + QString::fromStdString(this->clients[id].name) + " has disconnected !");
+            GHOST_LOG("Player " + this->clients[id].name + " has disconnected!");
             this->selector.remove(*this->clients[id].tcpSocket);
             this->clients[id].tcpSocket->disconnect();
             toErase = id;
@@ -231,7 +237,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    emit this->OnNewEvent(QString("New player : " + QString::fromStdString(client.name) + " (" + QString::number(client.port) + ")"));
+    GHOST_LOG("New player: " + client.name + " (" + std::to_string(client.port) + ")");
 
     this->clients.push_back(std::move(client));
 }
@@ -295,6 +301,7 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
     case HEADER::DISCONNECT: {
         auto client = this->GetClientByID(ID);
         if (client) {
+            GHOST_LOG("Requested disconnect:");
             this->DisconnectPlayer(*client);
         }
         break;
@@ -313,7 +320,7 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
             std::string map;
             packet >> map;
             client->currentMap = map;
-            emit this->OnNewEvent(QString::fromStdString(client->name) + " is now on " + QString::fromStdString(map));
+            GHOST_LOG(client->name + " is now on " + map);
         }
 
         break;
@@ -428,6 +435,7 @@ void NetworkManager::RunServer()
                 }
 
                 while (!toDisconnect.empty()) {
+                    GHOST_LOG("Socket died:");
                     this->DisconnectPlayer(*toDisconnect.front());
                     toDisconnect.pop();
                 }
@@ -448,6 +456,7 @@ void NetworkManager::DoHeartbeats()
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
             toDisconnect.push(&client);
+            GHOST_LOG("TCP missed 2 beats:");
         } else {
             // Send a heartbeat
             client.heartbeatToken = rand();
@@ -456,6 +465,7 @@ void NetworkManager::DoHeartbeats()
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
             if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
+                GHOST_LOG("TCP send failed:");
                 toDisconnect.push(&client);
             }
         }

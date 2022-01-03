@@ -9,7 +9,9 @@
 #include <thread>
 #include <cstdint>
 
+#ifdef GHOST_GUI
 #include <QObject>
+#endif
 
 struct Vector {
     float x;
@@ -52,9 +54,14 @@ struct Client {
     bool missedLastHeartbeat;
 };
 
+#ifdef GHOST_GUI
 class NetworkManager : public QObject
 {
     Q_OBJECT
+#else
+class NetworkManager
+{
+#endif
 
 private:
 
@@ -98,8 +105,10 @@ public:
 	void TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void TreatTCP(sf::Packet& packet);
 
+#ifdef GHOST_GUI
 signals:
     void OnNewEvent(QString event);
+#endif
 
 
 };
