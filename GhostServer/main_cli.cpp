@@ -211,8 +211,22 @@ int main(int argc, char **argv) {
 		g_should_stop = 1;
 	});
 
+	if (argc > 2) {
+		printf("Usage: %s [port]\n", argv[0]);
+		return 1;
+	}
+
+	int port = 53000;
+	if (argc == 2) {
+		port = atoi(argv[1]);
+		if (port < 1 || port > 65535) {
+			printf("Invalid port %d\n", port);
+			return 1;
+		}
+	}
+
 	puts("Server starting up");
-	g_network.StartServer(53000);
+	g_network.StartServer(port);
 	while (!g_should_stop) {
 		struct pollfd fds[] = {
 			(struct pollfd){
