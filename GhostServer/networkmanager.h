@@ -75,8 +75,6 @@ private:
 
     sf::Uint32 lastID;
 
-    int updateRate;
-
 	std::thread serverThread;
 
 	sf::Clock clock;

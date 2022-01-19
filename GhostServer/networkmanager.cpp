@@ -20,6 +20,7 @@
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
+static std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 
 //DataGhost
 
@@ -61,7 +62,6 @@ NetworkManager::NetworkManager()
     : isRunning(false)
     , serverPort(53000)
     , serverIP("localhost")
-    , updateRate(2000)
     , lastID(1) //0 == server
 {
 }
@@ -375,6 +375,7 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
         break;
     }
     case HEADER::UPDATE: {
+#ifdef LEGACY_UPDATE
         for (auto& client : this->clients) {
             if (client.ID != ID) {
                 if (!client.TCP_only) {
@@ -384,6 +385,12 @@ void NetworkManager::TreatTCP(sf::Packet& packet)
                 }
             }
         }
+#else
+				DataGhost data;
+				packet >> data;
+				auto client = this->GetClientByID(ID);
+				if (client) client->data = data;
+#endif
         break;
     }
     default:
@@ -422,6 +429,25 @@ void NetworkManager::RunServer()
             }
             lastHeartbeatUdp = now;
         }
+
+#ifndef LEGACY_UPDATE
+				if (now > lastUpdate + std::chrono::milliseconds(50)) {
+					// Send bulk update packet
+					sf::Packet packet;
+					packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
+					for (auto &client : this->clients) {
+						packet << sf::Uint32(client.ID) << client.data;
+					}
+					for (auto &client : this->clients) {
+						if (client.TCP_only) {
+							client.tcpSocket->send(packet);
+						} else {
+							this->udpSocket.send(packet, client.IP, client.port);
+						}
+					}
+					lastUpdate = now;
+				}
+#endif
 
         //UDP
         std::vector<std::pair<unsigned short, sf::Packet>> buffer;
