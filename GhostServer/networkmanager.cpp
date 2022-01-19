@@ -66,6 +66,15 @@ NetworkManager::NetworkManager()
 {
 }
 
+static std::mutex g_server_queue_mutex;
+static std::vector<std::function<void()>> g_server_queue;
+
+void NetworkManager::ScheduleServerThread(std::function<void()> func) {
+	g_server_queue_mutex.lock();
+	g_server_queue.push_back(func);
+	g_server_queue_mutex.unlock();
+}
+
 Client* NetworkManager::GetClientByID(sf::Uint32 ID)
 {
     for (auto& client : this->clients) {
@@ -483,6 +492,13 @@ void NetworkManager::RunServer()
                 }
             }
         }
+
+				g_server_queue_mutex.lock();
+				for (auto &f : g_server_queue) {
+					f();
+				}
+				g_server_queue.clear();
+				g_server_queue_mutex.unlock();
     }
 
     this->StopServer();

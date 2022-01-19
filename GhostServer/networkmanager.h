@@ -87,6 +87,8 @@ public:
 	std::vector<Client> clients;
 	std::vector<sf::IpAddress> bannedIps;
 
+	void ScheduleServerThread(std::function<void()> func);
+
     Client* GetClientByID(sf::Uint32 ID);
 
     bool StartServer(const int port);

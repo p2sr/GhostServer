@@ -57,14 +57,16 @@ static void handle_cmd(char *line) {
 		}
 
 		if (!strcmp(line, "list")) {
-			if (g_network.clients.empty()) {
-				puts("No clients");
-			} else {
-				puts("Clients:");
-				for (auto &cl : g_network.clients) {
-					printf("  %-3d %s @ %s:%d\n", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
+			g_network.ScheduleServerThread([]() {
+				if (g_network.clients.empty()) {
+					puts("No clients");
+				} else {
+					puts("Clients:");
+					for (auto &cl : g_network.clients) {
+						printf("  %-3d %s @ %s:%d\n", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
+					}
 				}
-			}
+			});
 			return;
 		}
 
@@ -73,7 +75,9 @@ static void handle_cmd(char *line) {
 				puts("Set a countdown first using countdown_set.");
 				return;
 			}
-			g_network.StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), g_countdown_duration);
+			g_network.ScheduleServerThread([]() {
+				g_network.StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), g_countdown_duration);
+			});
 			puts("Started countdown with:");
 			printf("  pre-cmd '%s'\n", g_entered_pre);
 			printf("  post-cmd '%s'\n", g_entered_post);
@@ -157,8 +161,11 @@ static void handle_cmd(char *line) {
 	case CMD_DISCONNECT:
 		g_current_cmd = CMD_NONE;
 		if (len != 0) {
-			auto players = g_network.GetPlayerIDByName(std::string(line));
-			for (auto id : players) g_network.DisconnectPlayer(id);
+			std::string l1(line);
+			g_network.ScheduleServerThread([=]() {
+				auto players = g_network.GetPlayerIDByName(l1);
+				for (auto id : players) g_network.DisconnectPlayer(id);
+			});
 			printf("Disconnected player '%s'\n", line);
 		}
 		return;
@@ -167,7 +174,9 @@ static void handle_cmd(char *line) {
 		g_current_cmd = CMD_NONE;
 		if (len != 0) {
 			int id = atoi(line);
-			g_network.DisconnectPlayer(id);
+			g_network.ScheduleServerThread([=]() {
+				g_network.DisconnectPlayer(id);
+			});
 			printf("Disconnected player ID %d\n", id);
 		}
 		return;
@@ -175,8 +184,11 @@ static void handle_cmd(char *line) {
 	case CMD_BAN:
 		g_current_cmd = CMD_NONE;
 		if (len != 0) {
-			auto players = g_network.GetPlayerIDByName(std::string(line));
-			for (auto id : players) g_network.BanClientIP(id);
+			std::string l1(line);
+			g_network.ScheduleServerThread([=]() {
+				auto players = g_network.GetPlayerIDByName(l1);
+				for (auto id : players) g_network.BanClientIP(id);
+			});
 			printf("Banned player '%s'\n", line);
 		}
 		return;
@@ -185,7 +197,9 @@ static void handle_cmd(char *line) {
 		g_current_cmd = CMD_NONE;
 		if (len != 0) {
 			int id = atoi(line);
-			g_network.BanClientIP(id);
+			g_network.ScheduleServerThread([=]() {
+				g_network.BanClientIP(id);
+			});
 			printf("Banned player ID %d\n", id);
 		}
 		return;
