@@ -284,11 +284,16 @@ void NetworkManager::TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>
     }
 }
 
-void NetworkManager::TreatTCP(sf::Packet& packet)
+void NetworkManager::TreatTCP(sf::Packet& packet, unsigned short udp_port)
 {
     HEADER header;
     sf::Uint32 ID;
     packet >> header >> ID;
+
+		if (udp_port != 0) {
+				auto client = this->GetClientByID(ID);
+				if (client) client->port = udp_port;
+		}
 
     switch (header) {
     case HEADER::NONE:
@@ -452,7 +457,9 @@ void NetworkManager::RunServer()
         //UDP
         std::vector<std::pair<unsigned short, sf::Packet>> buffer;
         this->ReceiveUDPUpdates(buffer);
-        this->TreatUDP(buffer);
+				for (auto [port, packet] : buffer) {
+					this->TreatTCP(packet, port);
+				}
 
         if (this->selector.wait(sf::milliseconds(50))) { // If a packet is received
             if (this->selector.isReady(this->listener)) {
@@ -468,7 +475,7 @@ void NetworkManager::RunServer()
                             toDisconnect.push(&this->clients[i]);
                             continue;
                         }
-                        this->TreatTCP(packet);
+                        this->TreatTCP(packet, 0);
                     }
                 }
 

@@ -102,7 +102,7 @@ public:
 	void CheckConnection();
 	void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
-	void TreatTCP(sf::Packet& packet);
+	void TreatTCP(sf::Packet& packet, unsigned short udp_port);
 
 	void BanClientIP(int id);
 
