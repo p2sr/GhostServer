@@ -129,7 +129,6 @@ void NetworkManager::DisconnectPlayer(Client& c)
     int toErase = -1;
     for (; id < this->clients.size(); ++id) {
         if (this->clients[id].IP != c.IP) {
-            GHOST_LOG("Inform " + this->clients[id].name + " of disconnect");
             this->clients[id].tcpSocket->send(packet);
         } else {
             GHOST_LOG("Player " + this->clients[id].name + " has disconnected!");
@@ -310,7 +309,6 @@ void NetworkManager::TreatTCP(sf::Packet& packet, unsigned short udp_port)
     case HEADER::DISCONNECT: {
         auto client = this->GetClientByID(ID);
         if (client) {
-            GHOST_LOG("Requested disconnect:");
             this->DisconnectPlayer(*client);
         }
         break;
@@ -480,7 +478,6 @@ void NetworkManager::RunServer()
                 }
 
                 while (!toDisconnect.empty()) {
-                    GHOST_LOG("Socket died:");
                     this->DisconnectPlayer(*toDisconnect.front());
                     toDisconnect.pop();
                 }
@@ -501,7 +498,6 @@ void NetworkManager::DoHeartbeats()
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
             toDisconnect.push(&client);
-            GHOST_LOG("TCP missed 2 beats:");
         } else {
             // Send a heartbeat
             client.heartbeatToken = rand();
@@ -510,7 +506,6 @@ void NetworkManager::DoHeartbeats()
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
             if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
-                GHOST_LOG("TCP send failed:");
                 toDisconnect.push(&client);
             }
         }
