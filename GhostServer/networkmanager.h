@@ -31,7 +31,8 @@ enum class HEADER {
     COUNTDOWN,
     UPDATE,
     SPEEDRUN_FINISH,
-    MODEL_CHANGE
+    MODEL_CHANGE,
+		COLOR_CHANGE,
 };
 
 struct DataGhost {
@@ -39,6 +40,10 @@ struct DataGhost {
     Vector view_angle;
 		float view_offset;
 		bool grounded;
+};
+
+struct Color {
+	uint8_t r, g, b;
 };
 
 struct Client {
@@ -51,6 +56,7 @@ struct Client {
     std::string currentMap;
     std::unique_ptr<sf::TcpSocket> tcpSocket;
     bool TCP_only;
+		Color color;
     uint32_t heartbeatToken;
     bool returnedHeartbeat;
     bool missedLastHeartbeat;

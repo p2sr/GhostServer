@@ -63,6 +63,18 @@ sf::Packet& operator<<(sf::Packet& packet, const HEADER& header)
     return packet << static_cast<sf::Uint8>(header);
 }
 
+// Color
+
+sf::Packet& operator>>(sf::Packet& packet, Color &col)
+{
+		return packet >> col.r >> col.g >> col.b;
+}
+
+sf::Packet& operator<<(sf::Packet& packet, const Color &col)
+{
+    return packet << col.r << col.g << col.b;
+}
+
 NetworkManager::NetworkManager()
     : isRunning(false)
     , serverPort(53000)
@@ -222,8 +234,9 @@ void NetworkManager::CheckConnection()
     std::string model_name;
     std::string level_name;
     bool TCP_only;
+		Color col;
 
-    connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only;
+    connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col;
 
     client.ID = this->lastID++;
     client.IP = client.tcpSocket->getRemoteAddress();
@@ -233,6 +246,7 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
+		client.color = col;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
 
@@ -243,12 +257,12 @@ void NetworkManager::CheckConnection()
     packet_new_client << client.ID; //Send Client's ID
     packet_new_client << sf::Uint32(this->clients.size()); //Send every players informations
     for (auto& c : this->clients) {
-        packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str();
+        packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str() << c.color;
     }
     client.tcpSocket->send(packet_new_client);
 
     sf::Packet packet_notify_all; // Notify every players of a new connection
-    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str();
+    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color;
 
     for (auto& c : this->clients) {
         c.tcpSocket->send(packet_notify_all);
@@ -385,6 +399,18 @@ void NetworkManager::TreatTCP(sf::Packet& packet, unsigned short udp_port)
         auto client = this->GetClientByID(ID);
         if (client) {
             client->modelName = modelName;
+            for (auto& other : this->clients) {
+                other.tcpSocket->send(packet);
+            }
+        }
+        break;
+    }
+    case HEADER::COLOR_CHANGE: {
+				Color col;
+        packet >> col;
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            client->color = col;
             for (auto& other : this->clients) {
                 other.tcpSocket->send(packet);
             }
