@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 #include <cstdint>
+#include <functional>
 
 #ifdef GHOST_GUI
 #include <QObject>
