@@ -37,6 +37,8 @@ enum class HEADER {
 struct DataGhost {
     Vector position;
     Vector view_angle;
+		float view_offset;
+		bool grounded;
 };
 
 struct Client {

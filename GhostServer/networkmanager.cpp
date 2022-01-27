@@ -36,11 +36,16 @@ sf::Packet& operator<<(sf::Packet& packet, const Vector& vec)
 
 sf::Packet& operator>>(sf::Packet& packet, DataGhost& dataGhost)
 {
-    return packet >> dataGhost.position >> dataGhost.view_angle;
+		uint8_t data;
+    auto &ret = packet >> dataGhost.position >> dataGhost.view_angle >> data;
+		dataGhost.view_offset = (float)(data & 0x7F);
+		dataGhost.grounded = (data & 0x80) != 0;
+		return ret;
 }
 sf::Packet& operator<<(sf::Packet& packet, const DataGhost& dataGhost)
 {
-    return packet << dataGhost.position << dataGhost.view_angle;
+		uint8_t data = ((int)dataGhost.view_offset & 0x7F) | (dataGhost.grounded ? 0x80 : 0x00);
+    return packet << dataGhost.position << dataGhost.view_angle << data;
 }
 
 //HEADER
