@@ -287,31 +287,7 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf:
     } while (status == sf::Socket::Done);
 }
 
-void NetworkManager::TreatUDP(std::vector<std::pair<unsigned short, sf::Packet>>& buffer)
-{
-    for (auto& pair : buffer) {
-        unsigned short port = pair.first;
-        auto &packet = pair.second;
-        sf::Packet p;
-        HEADER H;
-        sf::Uint32 ID;
-        p = packet;
-        p >> H >> ID;
-        for (auto& client : this->clients) {
-            if (client.ID == ID) {
-                client.port = port;
-            } else {
-                if (!client.TCP_only) {
-                    this->udpSocket.send(packet, client.IP, client.port);
-                } else {
-                    client.tcpSocket->send(packet);
-                }
-            }
-        }
-    }
-}
-
-void NetworkManager::TreatTCP(sf::Packet& packet, unsigned short udp_port)
+void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
 {
     HEADER header;
     sf::Uint32 ID;
@@ -482,7 +458,7 @@ void NetworkManager::RunServer()
         std::vector<std::pair<unsigned short, sf::Packet>> buffer;
         this->ReceiveUDPUpdates(buffer);
 				for (auto [port, packet] : buffer) {
-					this->TreatTCP(packet, port);
+					this->Treat(packet, port);
 				}
 
         if (this->selector.wait(sf::milliseconds(50))) { // If a packet is received
@@ -499,7 +475,7 @@ void NetworkManager::RunServer()
                             toDisconnect.push(&this->clients[i]);
                             continue;
                         }
-                        this->TreatTCP(packet, 0);
+                        this->Treat(packet, 0);
                     }
                 }
 
