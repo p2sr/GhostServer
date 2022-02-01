@@ -418,22 +418,10 @@ void NetworkManager::TreatTCP(sf::Packet& packet, unsigned short udp_port)
         break;
     }
     case HEADER::UPDATE: {
-#ifdef LEGACY_UPDATE
-        for (auto& client : this->clients) {
-            if (client.ID != ID) {
-                if (!client.TCP_only) {
-                    this->udpSocket.send(packet, client.IP, client.port);
-                } else {
-                    client.tcpSocket->send(packet);
-                }
-            }
-        }
-#else
 				DataGhost data;
 				packet >> data;
 				auto client = this->GetClientByID(ID);
 				if (client) client->data = data;
-#endif
         break;
     }
     default:
@@ -473,7 +461,6 @@ void NetworkManager::RunServer()
             lastHeartbeatUdp = now;
         }
 
-#ifndef LEGACY_UPDATE
 				if (now > lastUpdate + std::chrono::milliseconds(50)) {
 					// Send bulk update packet
 					sf::Packet packet;
@@ -490,7 +477,6 @@ void NetworkManager::RunServer()
 					}
 					lastUpdate = now;
 				}
-#endif
 
         //UDP
         std::vector<std::pair<unsigned short, sf::Packet>> buffer;
