@@ -16,6 +16,7 @@ static void file_log(std::string str) {
         char buf[sizeof "2000-01-01T00:00:00Z"];
         strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
         fprintf(g_logFile, "[%s] %s\n", buf, str.c_str());
+        fflush(g_logFile);
     }
 }
 
@@ -92,6 +93,7 @@ NetworkManager::NetworkManager(const char *logfile)
     , serverPort(53000)
     , serverIP("localhost")
     , lastID(1) //0 == server
+    , hasStarted(false)
 {
     g_logFile = fopen(logfile, "w");
 }
@@ -243,9 +245,10 @@ void NetworkManager::CheckConnection()
     std::string model_name;
     std::string level_name;
     bool TCP_only;
-    Color col;
+	Color col;
+    bool spectator;
 
-    connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col;
+    connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col >> spectator;
 
     client.ID = this->lastID++;
     client.IP = client.tcpSocket->getRemoteAddress();
@@ -255,9 +258,10 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
-    client.color = col;
+	client.color = col;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
+    client.spectator = this->hasStarted ? true : spectator; //People can break the run when joining in the middle of a run
 
     this->selector.add(*client.tcpSocket);
 
@@ -266,18 +270,19 @@ void NetworkManager::CheckConnection()
     packet_new_client << client.ID; //Send Client's ID
     packet_new_client << sf::Uint32(this->clients.size()); //Send every players informations
     for (auto& c : this->clients) {
-        packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str() << c.color;
+        packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str() << c.color << c.spectator;
     }
+
     client.tcpSocket->send(packet_new_client);
 
     sf::Packet packet_notify_all; // Notify every players of a new connection
-    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color;
+    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color << client.spectator;
 
     for (auto& c : this->clients) {
         c.tcpSocket->send(packet_notify_all);
     }
 
-    GHOST_LOG("New player: " + client.name + " @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    GHOST_LOG("New player: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") " + " @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 }
@@ -340,7 +345,8 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
             std::string map;
             packet >> map;
             client->currentMap = map;
-            GHOST_LOG(client->name + " is now on " + map);
+            if(!client->spectator)
+                GHOST_LOG(client->name + " is now on " + map);
         }
 
         break;

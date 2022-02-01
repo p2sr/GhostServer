@@ -23,6 +23,7 @@ private:
 
 	void StartServer();
     void StopServer();
+    void ResetServer();
 
 public slots:
     void AddEventLog(QString log) {ui.textBrowser->append(log);}

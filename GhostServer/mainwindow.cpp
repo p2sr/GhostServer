@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui.setupUi(this);
     this->isRunning = false;
+    ui.resetButton.setVisible(false);
 
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(&network, &NetworkManager::OnNewEvent, this, &MainWindow::AddEventLog);
@@ -33,6 +34,7 @@ void MainWindow::StartServer()
 
     this->isRunning = true;
     ui.serverButton->setText("Stop server");
+    ui.resetButton->setVisible(true);
     disconnect(ui.serverButton, nullptr, nullptr, nullptr);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StopServer);
 }
@@ -42,9 +44,18 @@ void MainWindow::StopServer()
     this->network.StopServer();
 
     this->isRunning = false;
+    this->network.hasStarted = false;
     ui.serverButton->setText("Start server");
+    ui.resetButton->setVisible(false);
+
     disconnect(ui.serverButton, nullptr, nullptr, nullptr);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
+}
+
+void MainWindow::ResetServer()
+{
+    this->network.hasStarted = false;
+    ui.resetButton->setVisible(false);
 }
 
 void MainWindow::StartCountdown()
@@ -77,6 +88,8 @@ void MainWindow::StartCountdown()
 
     int duration = ui.duration->value();
     this->network.StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
+    this->network.hasStarted = true;
+
     this->AddEventLog("Countdown will start in " + QString::number(duration));
     this->AddEventLog("Pre-command : " + pre_cmds);
     this->AddEventLog("Post-command : " + post_cmds);

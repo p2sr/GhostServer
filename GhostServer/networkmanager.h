@@ -61,6 +61,7 @@ struct Client {
     uint32_t heartbeatToken;
     bool returnedHeartbeat;
     bool missedLastHeartbeat;
+    bool spectator;
 };
 
 #ifdef GHOST_GUI
@@ -97,6 +98,7 @@ public:
     sf::UdpSocket udpSocket;
     std::vector<Client> clients;
     std::vector<sf::IpAddress> bannedIps;
+    bool hasStarted;
 
     void ScheduleServerThread(std::function<void()> func);
 
