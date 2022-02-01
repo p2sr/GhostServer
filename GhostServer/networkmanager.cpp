@@ -138,7 +138,7 @@ void NetworkManager::StopServer()
     }
 
     while (this->clients.size() > 0) {
-        this->DisconnectPlayer(this->clients.back());
+        this->DisconnectPlayer(this->clients.back(), "server stopped");
     }
 
     this->isRunning = false;
@@ -147,7 +147,7 @@ void NetworkManager::StopServer()
     GHOST_LOG("Server stopped!");
 }
 
-void NetworkManager::DisconnectPlayer(Client& c)
+void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
 {
     sf::Packet packet;
     packet << HEADER::DISCONNECT << c.ID;
@@ -157,7 +157,7 @@ void NetworkManager::DisconnectPlayer(Client& c)
         if (this->clients[id].IP != c.IP) {
             this->clients[id].tcpSocket->send(packet);
         } else {
-            GHOST_LOG("Player " + this->clients[id].name + " has disconnected!");
+            GHOST_LOG("Player " + this->clients[id].name + " has disconnected! Reason: " + reason);
             this->selector.remove(*this->clients[id].tcpSocket);
             this->clients[id].tcpSocket->disconnect();
             toErase = id;
@@ -169,20 +169,12 @@ void NetworkManager::DisconnectPlayer(Client& c)
     }
 }
 
-void NetworkManager::DisconnectPlayer(sf::Uint32 ID)
+std::vector<Client *> NetworkManager::GetPlayerByName(std::string name)
 {
-    auto client = this->GetClientByID(ID);
-    if (client) {
-        this->DisconnectPlayer(*client);
-    }
-}
-
-std::vector<sf::Uint32> NetworkManager::GetPlayerIDByName(std::string name)
-{
-    std::vector<sf::Uint32> matches;
-    for (auto& client : this->clients) {
+    std::vector<Client *> matches;
+    for (auto &client : this->clients) {
         if (client.name == name) {
-            matches.push_back(client.ID);
+            matches.push_back(&client);
         }
     }
 
@@ -313,7 +305,7 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
     case HEADER::DISCONNECT: {
         auto client = this->GetClientByID(ID);
         if (client) {
-            this->DisconnectPlayer(*client);
+            this->DisconnectPlayer(*client, "requested");
         }
         break;
     }
@@ -405,12 +397,9 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
     }
 }
 
-void NetworkManager::BanClientIP(int id) {
-	auto cl = this->GetClientByID(id);
-	if (cl) {
-		this->bannedIps.push_back(cl->IP);
-		this->DisconnectPlayer(id);
-	}
+void NetworkManager::BanClientIP(Client &cl) {
+	this->bannedIps.push_back(cl.IP);
+	this->DisconnectPlayer(cl, "banned");
 }
 
 //Threaded function
@@ -470,7 +459,7 @@ void NetworkManager::RunServer()
                         sf::Packet packet;
                         sf::Socket::Status status = this->clients[i].tcpSocket->receive(packet);
                         if (status == sf::Socket::Disconnected) {
-														this->DisconnectPlayer(this->clients[i]);
+														this->DisconnectPlayer(this->clients[i], "socket died");
 														--i;
                             continue;
                         }
@@ -499,7 +488,7 @@ void NetworkManager::DoHeartbeats()
 				auto &client = this->clients[i];
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
-						this->DisconnectPlayer(client);
+						this->DisconnectPlayer(client, "missed two heartbeats");
 						--i;
         } else {
             // Send a heartbeat
@@ -509,7 +498,7 @@ void NetworkManager::DoHeartbeats()
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
             if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
-								this->DisconnectPlayer(client);
+								this->DisconnectPlayer(client, "socket died");
 								--i;
             }
         }

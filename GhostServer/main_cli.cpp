@@ -163,8 +163,8 @@ static void handle_cmd(char *line) {
 		if (len != 0) {
 			std::string l1(line);
 			g_network.ScheduleServerThread([=]() {
-				auto players = g_network.GetPlayerIDByName(l1);
-				for (auto id : players) g_network.DisconnectPlayer(id);
+				auto players = g_network.GetPlayerByName(l1);
+				for (auto cl : players) g_network.DisconnectPlayer(*cl, "kicked");
 			});
 			printf("Disconnected player '%s'\n", line);
 		}
@@ -175,7 +175,8 @@ static void handle_cmd(char *line) {
 		if (len != 0) {
 			int id = atoi(line);
 			g_network.ScheduleServerThread([=]() {
-				g_network.DisconnectPlayer(id);
+				auto cl = g_network.GetClientByID(id);
+				if (cl) g_network.DisconnectPlayer(*cl, "kicked");
 			});
 			printf("Disconnected player ID %d\n", id);
 		}
@@ -186,8 +187,8 @@ static void handle_cmd(char *line) {
 		if (len != 0) {
 			std::string l1(line);
 			g_network.ScheduleServerThread([=]() {
-				auto players = g_network.GetPlayerIDByName(l1);
-				for (auto id : players) g_network.BanClientIP(id);
+				auto players = g_network.GetPlayerByName(l1);
+				for (auto cl : players) g_network.BanClientIP(*cl);
 			});
 			printf("Banned player '%s'\n", line);
 		}
@@ -198,7 +199,8 @@ static void handle_cmd(char *line) {
 		if (len != 0) {
 			int id = atoi(line);
 			g_network.ScheduleServerThread([=]() {
-				g_network.BanClientIP(id);
+				auto cl = g_network.GetClientByID(id);
+				if (cl) g_network.BanClientIP(*cl);
 			});
 			printf("Banned player ID %d\n", id);
 		}

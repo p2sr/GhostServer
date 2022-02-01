@@ -105,16 +105,15 @@ public:
 	void RunServer();
 
     bool ShouldBlockConnection(const sf::IpAddress &ip);
-    void DisconnectPlayer(Client &client);
-    void DisconnectPlayer(sf::Uint32 ID);
-    std::vector<sf::Uint32> GetPlayerIDByName(std::string name);
+    void DisconnectPlayer(Client &client, const char *reason);
+    std::vector<Client *> GetPlayerByName(std::string name);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
 
 	void CheckConnection();
 	void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
 	void Treat(sf::Packet& packet, unsigned short udp_port);
 
-	void BanClientIP(int id);
+	void BanClientIP(Client &cl);
 
 #ifdef GHOST_GUI
 signals:
