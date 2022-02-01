@@ -36,15 +36,15 @@ sf::Packet& operator<<(sf::Packet& packet, const Vector& vec)
 
 sf::Packet& operator>>(sf::Packet& packet, DataGhost& dataGhost)
 {
-		uint8_t data;
+    uint8_t data;
     auto &ret = packet >> dataGhost.position >> dataGhost.view_angle >> data;
-		dataGhost.view_offset = (float)(data & 0x7F);
-		dataGhost.grounded = (data & 0x80) != 0;
-		return ret;
+    dataGhost.view_offset = (float)(data & 0x7F);
+    dataGhost.grounded = (data & 0x80) != 0;
+    return ret;
 }
 sf::Packet& operator<<(sf::Packet& packet, const DataGhost& dataGhost)
 {
-		uint8_t data = ((int)dataGhost.view_offset & 0x7F) | (dataGhost.grounded ? 0x80 : 0x00);
+    uint8_t data = ((int)dataGhost.view_offset & 0x7F) | (dataGhost.grounded ? 0x80 : 0x00);
     return packet << dataGhost.position << dataGhost.view_angle << data;
 }
 
@@ -67,7 +67,7 @@ sf::Packet& operator<<(sf::Packet& packet, const HEADER& header)
 
 sf::Packet& operator>>(sf::Packet& packet, Color &col)
 {
-		return packet >> col.r >> col.g >> col.b;
+    return packet >> col.r >> col.g >> col.b;
 }
 
 sf::Packet& operator<<(sf::Packet& packet, const Color &col)
@@ -87,9 +87,9 @@ static std::mutex g_server_queue_mutex;
 static std::vector<std::function<void()>> g_server_queue;
 
 void NetworkManager::ScheduleServerThread(std::function<void()> func) {
-	g_server_queue_mutex.lock();
-	g_server_queue.push_back(func);
-	g_server_queue_mutex.unlock();
+    g_server_queue_mutex.lock();
+    g_server_queue.push_back(func);
+    g_server_queue_mutex.unlock();
 }
 
 Client* NetworkManager::GetClientByID(sf::Uint32 ID)
@@ -196,9 +196,9 @@ bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
         return true;
     }
 
-		for (auto banned : this->bannedIps) {
-			if (ip == banned) return true;
-		}
+    for (auto banned : this->bannedIps) {
+        if (ip == banned) return true;
+    }
 
     return false;
 }
@@ -226,7 +226,7 @@ void NetworkManager::CheckConnection()
     std::string model_name;
     std::string level_name;
     bool TCP_only;
-		Color col;
+    Color col;
 
     connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col;
 
@@ -238,7 +238,7 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
-		client.color = col;
+    client.color = col;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
 
@@ -285,10 +285,10 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
     sf::Uint32 ID;
     packet >> header >> ID;
 
-		if (udp_port != 0) {
-				auto client = this->GetClientByID(ID);
-				if (client) client->port = udp_port;
-		}
+    if (udp_port != 0) {
+        auto client = this->GetClientByID(ID);
+        if (client) client->port = udp_port;
+    }
 
     switch (header) {
     case HEADER::NONE:
@@ -374,7 +374,7 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
         break;
     }
     case HEADER::COLOR_CHANGE: {
-				Color col;
+        Color col;
         packet >> col;
         auto client = this->GetClientByID(ID);
         if (client) {
@@ -386,10 +386,10 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
         break;
     }
     case HEADER::UPDATE: {
-				DataGhost data;
-				packet >> data;
-				auto client = this->GetClientByID(ID);
-				if (client) client->data = data;
+        DataGhost data;
+        packet >> data;
+        auto client = this->GetClientByID(ID);
+        if (client) client->data = data;
         break;
     }
     default:
@@ -398,8 +398,8 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
 }
 
 void NetworkManager::BanClientIP(Client &cl) {
-	this->bannedIps.push_back(cl.IP);
-	this->DisconnectPlayer(cl, "banned");
+    this->bannedIps.push_back(cl.IP);
+    this->DisconnectPlayer(cl, "banned");
 }
 
 //Threaded function
@@ -426,29 +426,29 @@ void NetworkManager::RunServer()
             lastHeartbeatUdp = now;
         }
 
-				if (now > lastUpdate + std::chrono::milliseconds(50)) {
-					// Send bulk update packet
-					sf::Packet packet;
-					packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
-					for (auto &client : this->clients) {
-						packet << sf::Uint32(client.ID) << client.data;
-					}
-					for (auto &client : this->clients) {
-						if (client.TCP_only) {
-							client.tcpSocket->send(packet);
-						} else {
-							this->udpSocket.send(packet, client.IP, client.port);
-						}
-					}
-					lastUpdate = now;
-				}
+        if (now > lastUpdate + std::chrono::milliseconds(50)) {
+            // Send bulk update packet
+            sf::Packet packet;
+            packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
+            for (auto &client : this->clients) {
+                packet << sf::Uint32(client.ID) << client.data;
+            }
+            for (auto &client : this->clients) {
+                if (client.TCP_only) {
+                    client.tcpSocket->send(packet);
+                } else {
+                    this->udpSocket.send(packet, client.IP, client.port);
+                }
+            }
+            lastUpdate = now;
+        }
 
         //UDP
         std::vector<std::pair<unsigned short, sf::Packet>> buffer;
         this->ReceiveUDPUpdates(buffer);
-				for (auto [port, packet] : buffer) {
-					this->Treat(packet, port);
-				}
+        for (auto [port, packet] : buffer) {
+            this->Treat(packet, port);
+        }
 
         if (this->selector.wait(sf::milliseconds(50))) { // If a packet is received
             if (this->selector.isReady(this->listener)) {
@@ -459,8 +459,8 @@ void NetworkManager::RunServer()
                         sf::Packet packet;
                         sf::Socket::Status status = this->clients[i].tcpSocket->receive(packet);
                         if (status == sf::Socket::Disconnected) {
-														this->DisconnectPlayer(this->clients[i], "socket died");
-														--i;
+                            this->DisconnectPlayer(this->clients[i], "socket died");
+                            --i;
                             continue;
                         }
                         this->Treat(packet, 0);
@@ -469,12 +469,12 @@ void NetworkManager::RunServer()
             }
         }
 
-				g_server_queue_mutex.lock();
-				for (auto &f : g_server_queue) {
-					f();
-				}
-				g_server_queue.clear();
-				g_server_queue_mutex.unlock();
+        g_server_queue_mutex.lock();
+        for (auto &f : g_server_queue) {
+            f();
+        }
+        g_server_queue.clear();
+        g_server_queue_mutex.unlock();
     }
 
     this->StopServer();
@@ -485,11 +485,11 @@ void NetworkManager::DoHeartbeats()
     // We don't disconnect clients in the loop; else, the loop will have
     // UB
     for (size_t i = 0; i < this->clients.size(); ++i) {
-				auto &client = this->clients[i];
+        auto &client = this->clients[i];
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
-						this->DisconnectPlayer(client, "missed two heartbeats");
-						--i;
+            this->DisconnectPlayer(client, "missed two heartbeats");
+            --i;
         } else {
             // Send a heartbeat
             client.heartbeatToken = rand();
@@ -498,8 +498,8 @@ void NetworkManager::DoHeartbeats()
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
             if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
-								this->DisconnectPlayer(client, "socket died");
-								--i;
+                this->DisconnectPlayer(client, "socket died");
+                --i;
             }
         }
     }

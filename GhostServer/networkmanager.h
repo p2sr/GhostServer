@@ -33,18 +33,18 @@ enum class HEADER {
     UPDATE,
     SPEEDRUN_FINISH,
     MODEL_CHANGE,
-		COLOR_CHANGE,
+    COLOR_CHANGE,
 };
 
 struct DataGhost {
     Vector position;
     Vector view_angle;
-		float view_offset;
-		bool grounded;
+    float view_offset;
+    bool grounded;
 };
 
 struct Color {
-	uint8_t r, g, b;
+    uint8_t r, g, b;
 };
 
 struct Client {
@@ -57,7 +57,7 @@ struct Client {
     std::string currentMap;
     std::unique_ptr<sf::TcpSocket> tcpSocket;
     bool TCP_only;
-		Color color;
+    Color color;
     uint32_t heartbeatToken;
     bool returnedHeartbeat;
     bool missedLastHeartbeat;
@@ -80,40 +80,40 @@ private:
     sf::IpAddress serverIP;
     sf::TcpListener listener;
     sf::SocketSelector selector;
-	int port = 0;
+    int port = 0;
 
     sf::Uint32 lastID;
 
-	std::thread serverThread;
+    std::thread serverThread;
 
-	sf::Clock clock;
+    sf::Clock clock;
 
     void DoHeartbeats();
 
 public:
-	sf::UdpSocket udpSocket;
+    sf::UdpSocket udpSocket;
     NetworkManager();
-	std::vector<Client> clients;
-	std::vector<sf::IpAddress> bannedIps;
+    std::vector<Client> clients;
+    std::vector<sf::IpAddress> bannedIps;
 
-	void ScheduleServerThread(std::function<void()> func);
+    void ScheduleServerThread(std::function<void()> func);
 
     Client* GetClientByID(sf::Uint32 ID);
 
     bool StartServer(const int port);
-	void StopServer();
-	void RunServer();
+    void StopServer();
+    void RunServer();
 
     bool ShouldBlockConnection(const sf::IpAddress &ip);
     void DisconnectPlayer(Client &client, const char *reason);
     std::vector<Client *> GetPlayerByName(std::string name);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
 
-	void CheckConnection();
-	void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
-	void Treat(sf::Packet& packet, unsigned short udp_port);
+    void CheckConnection();
+    void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
+    void Treat(sf::Packet& packet, unsigned short udp_port);
 
-	void BanClientIP(Client &cl);
+    void BanClientIP(Client &cl);
 
 #ifdef GHOST_GUI
 signals:
