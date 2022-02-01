@@ -465,23 +465,17 @@ void NetworkManager::RunServer()
             if (this->selector.isReady(this->listener)) {
                 this->CheckConnection(); //A player wants to connect
             } else {
-                std::queue<Client*> toDisconnect;
-
                 for (int i = 0; i < this->clients.size(); ++i) {
                     if (this->selector.isReady(*this->clients[i].tcpSocket)) {
                         sf::Packet packet;
                         sf::Socket::Status status = this->clients[i].tcpSocket->receive(packet);
                         if (status == sf::Socket::Disconnected) {
-                            toDisconnect.push(&this->clients[i]);
+														this->DisconnectPlayer(this->clients[i]);
+														--i;
                             continue;
                         }
                         this->Treat(packet, 0);
                     }
-                }
-
-                while (!toDisconnect.empty()) {
-                    this->DisconnectPlayer(*toDisconnect.front());
-                    toDisconnect.pop();
                 }
             }
         }
@@ -501,12 +495,12 @@ void NetworkManager::DoHeartbeats()
 {
     // We don't disconnect clients in the loop; else, the loop will have
     // UB
-    std::queue<Client*> toDisconnect;
-
-    for (auto& client : this->clients) {
+    for (size_t i = 0; i < this->clients.size(); ++i) {
+				auto &client = this->clients[i];
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
             // Client didn't return heartbeat in time; sever connection
-            toDisconnect.push(&client);
+						this->DisconnectPlayer(client);
+						--i;
         } else {
             // Send a heartbeat
             client.heartbeatToken = rand();
@@ -515,13 +509,9 @@ void NetworkManager::DoHeartbeats()
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
             if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
-                toDisconnect.push(&client);
+								this->DisconnectPlayer(client);
+								--i;
             }
         }
-    }
-
-    while (!toDisconnect.empty()) {
-        this->DisconnectPlayer(*toDisconnect.front());
-        toDisconnect.pop();
     }
 }
