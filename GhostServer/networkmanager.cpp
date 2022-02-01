@@ -125,7 +125,7 @@ bool NetworkManager::StartServer(const int port)
     this->serverThread = std::thread(&NetworkManager::RunServer, this);
     this->serverThread.detach();
 
-    GHOST_LOG("Server started on " + this->serverIP.toString() + "(public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
+    GHOST_LOG("Server started on " + this->serverIP.toString() + " (public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
 
     return true;
 }
