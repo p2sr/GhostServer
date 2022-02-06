@@ -21,7 +21,7 @@ static char *g_entered_pre;
 static char *g_entered_post;
 static int g_countdown_duration = -1;
 
-static NetworkManager g_network;
+static NetworkManager *g_network;
 
 static void handle_cmd(char *line) {
     while (isspace(*line)) ++line;
@@ -57,12 +57,12 @@ static void handle_cmd(char *line) {
         }
 
         if (!strcmp(line, "list")) {
-            g_network.ScheduleServerThread([]() {
-                if (g_network.clients.empty()) {
+            g_network->ScheduleServerThread([]() {
+                if (g_network->clients.empty()) {
                     puts("No clients");
                 } else {
                     puts("Clients:");
-                    for (auto &cl : g_network.clients) {
+                    for (auto &cl : g_network->clients) {
                         printf("  %-3d %s @ %s:%d\n", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
                     }
                 }
@@ -75,8 +75,8 @@ static void handle_cmd(char *line) {
                 puts("Set a countdown first using countdown_set.");
                 return;
             }
-            g_network.ScheduleServerThread([]() {
-                g_network.StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), g_countdown_duration);
+            g_network->ScheduleServerThread([]() {
+                g_network->StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), g_countdown_duration);
             });
             puts("Started countdown with:");
             printf("  pre-cmd '%s'\n", g_entered_pre);
@@ -162,9 +162,9 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         if (len != 0) {
             std::string l1(line);
-            g_network.ScheduleServerThread([=]() {
-                auto players = g_network.GetPlayerByName(l1);
-                for (auto cl : players) g_network.DisconnectPlayer(*cl, "kicked");
+            g_network->ScheduleServerThread([=]() {
+                auto players = g_network->GetPlayerByName(l1);
+                for (auto cl : players) g_network->DisconnectPlayer(*cl, "kicked");
             });
             printf("Disconnected player '%s'\n", line);
         }
@@ -174,9 +174,9 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         if (len != 0) {
             int id = atoi(line);
-            g_network.ScheduleServerThread([=]() {
-                auto cl = g_network.GetClientByID(id);
-                if (cl) g_network.DisconnectPlayer(*cl, "kicked");
+            g_network->ScheduleServerThread([=]() {
+                auto cl = g_network->GetClientByID(id);
+                if (cl) g_network->DisconnectPlayer(*cl, "kicked");
             });
             printf("Disconnected player ID %d\n", id);
         }
@@ -186,9 +186,9 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         if (len != 0) {
             std::string l1(line);
-            g_network.ScheduleServerThread([=]() {
-                auto players = g_network.GetPlayerByName(l1);
-                for (auto cl : players) g_network.BanClientIP(*cl);
+            g_network->ScheduleServerThread([=]() {
+                auto players = g_network->GetPlayerByName(l1);
+                for (auto cl : players) g_network->BanClientIP(*cl);
             });
             printf("Banned player '%s'\n", line);
         }
@@ -198,9 +198,9 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         if (len != 0) {
             int id = atoi(line);
-            g_network.ScheduleServerThread([=]() {
-                auto cl = g_network.GetClientByID(id);
-                if (cl) g_network.BanClientIP(*cl);
+            g_network->ScheduleServerThread([=]() {
+                auto cl = g_network->GetClientByID(id);
+                if (cl) g_network->BanClientIP(*cl);
             });
             printf("Banned player ID %d\n", id);
         }
@@ -213,13 +213,13 @@ int main(int argc, char **argv) {
         g_should_stop = 1;
     });
 
-    if (argc > 2) {
+    if (argc > 3) {
         printf("Usage: %s [port]\n", argv[0]);
         return 1;
     }
 
     int port = 53000;
-    if (argc == 2) {
+    if (argc >= 2) {
         port = atoi(argv[1]);
         if (port < 1 || port > 65535) {
             printf("Invalid port %d\n", port);
@@ -227,8 +227,16 @@ int main(int argc, char **argv) {
         }
     }
 
+		const char *logfile = "ghost_log";
+    if (argc >= 3) {
+				logfile = argv[2];
+    }
+
+		NetworkManager network(logfile);
+		g_network = &network;
+
     puts("Server starting up");
-    g_network.StartServer(port);
+    network.StartServer(port);
     while (!g_should_stop) {
         struct pollfd fds[] = {
             (struct pollfd){
@@ -248,7 +256,7 @@ int main(int argc, char **argv) {
         }
     }
     puts("Server shutting down");
-    g_network.StopServer();
+    network.StopServer();
 
     return 0;
 }

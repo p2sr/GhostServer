@@ -91,7 +91,7 @@ private:
     void DoHeartbeats();
 
 public:
-    NetworkManager();
+    NetworkManager(const char *logfile = "ghost_log");
     ~NetworkManager();
 
     sf::UdpSocket udpSocket;

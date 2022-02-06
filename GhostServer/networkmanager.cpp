@@ -87,13 +87,13 @@ sf::Packet& operator<<(sf::Packet& packet, const Color &col)
     return packet << col.r << col.g << col.b;
 }
 
-NetworkManager::NetworkManager()
+NetworkManager::NetworkManager(const char *logfile)
     : isRunning(false)
     , serverPort(53000)
     , serverIP("localhost")
     , lastID(1) //0 == server
 {
-    g_logFile = fopen("ghost_log", "w");
+    g_logFile = fopen(logfile, "w");
 }
 
 NetworkManager::~NetworkManager() {
