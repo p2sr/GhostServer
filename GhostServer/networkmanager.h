@@ -91,8 +91,10 @@ private:
     void DoHeartbeats();
 
 public:
-    sf::UdpSocket udpSocket;
     NetworkManager();
+    ~NetworkManager();
+
+    sf::UdpSocket udpSocket;
     std::vector<Client> clients;
     std::vector<sf::IpAddress> bannedIps;
 

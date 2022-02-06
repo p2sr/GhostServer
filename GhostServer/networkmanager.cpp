@@ -2,17 +2,29 @@
 
 #include <memory>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <queue>
 
 #include <SFML/Network.hpp>
 
+static FILE *g_logFile;
+
+static void file_log(std::string str) {
+    if (g_logFile) {
+        time_t now = time(NULL);
+        char buf[sizeof "2000-01-01T00:00:00Z"];
+        strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+        fprintf(g_logFile, "[%s] %s\n", buf, str.c_str());
+    }
+}
+
 #ifdef GHOST_GUI
 #include <QVector>
-#define GHOST_LOG(x) emit this->OnNewEvent(QString::fromStdString(x))
+#define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
 #else
 #include <stdio.h>
-#define GHOST_LOG(x) printf("[LOG] %s\n", std::string(x).c_str())
+#define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
 #endif
 
 #define HEARTBEAT_RATE 5000
@@ -81,6 +93,11 @@ NetworkManager::NetworkManager()
     , serverIP("localhost")
     , lastID(1) //0 == server
 {
+    g_logFile = fopen("ghost_log", "w");
+}
+
+NetworkManager::~NetworkManager() {
+    if (g_logFile) fclose(g_logFile);
 }
 
 static std::mutex g_server_queue_mutex;
@@ -341,8 +358,14 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
         }
     }
     case HEADER::MESSAGE: {
-        for (auto& client : this->clients) {
-            client.tcpSocket->send(packet);
+        auto client = this->GetClientByID(ID);
+        if (client) {
+            std::string message;
+            packet >> message;
+            GHOST_LOG("[message] " + client->name + ": " + message);
+            for (auto& other : this->clients) {
+                other.tcpSocket->send(packet);
+            }
         }
         break;
     }

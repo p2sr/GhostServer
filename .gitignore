@@ -50,3 +50,5 @@ GhostServer/*_qt.cpp
 config.mk
 ghost_server
 ghost_server_cli
+
+ghost_log
