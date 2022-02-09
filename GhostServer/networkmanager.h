@@ -118,6 +118,7 @@ public:
     void Treat(sf::Packet& packet, unsigned short udp_port);
 
     void BanClientIP(Client &cl);
+    void ServerMessage(const char *msg);
 
 #ifdef GHOST_GUI
 signals:

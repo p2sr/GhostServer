@@ -15,6 +15,7 @@ static enum {
     CMD_DISCONNECT_ID,
     CMD_BAN,
     CMD_BAN_ID,
+    CMD_SERVER_MSG,
 } g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
@@ -57,6 +58,7 @@ static void handle_cmd(char *line) {
             puts("  refuse_players      stop accepting connections from players");
             puts("  accept_spectators   start accepting connections from spectators");
             puts("  refuse_spectators   stop accepting connections from spectators");
+            puts("  server_msg          send all clients a message from the server");
             return;
         }
 
@@ -160,6 +162,13 @@ static void handle_cmd(char *line) {
             return;
         }
 
+        if (!strcmp(line, "server_msg")) {
+            g_current_cmd = CMD_SERVER_MSG;
+            fputs("Message to send: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
         printf("Unknown command: '%s'\n", line);
         return;
 
@@ -240,6 +249,11 @@ static void handle_cmd(char *line) {
             });
             printf("Banned player ID %d\n", id);
         }
+        return;
+
+    case CMD_SERVER_MSG:
+        g_current_cmd = CMD_NONE;
+        g_network->ServerMessage(line);
         return;
     }
 }

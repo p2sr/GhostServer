@@ -252,7 +252,7 @@ void NetworkManager::CheckConnection()
 
     if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
         // Refuse connection, since we're not currently accepting this type
-				return;
+        return;
     }
 
     client.ID = this->lastID++;
@@ -433,6 +433,15 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
 void NetworkManager::BanClientIP(Client &cl) {
     this->bannedIps.push_back(cl.IP);
     this->DisconnectPlayer(cl, "banned");
+}
+
+void NetworkManager::ServerMessage(const char *msg) {
+    GHOST_LOG(std::string("[server message] ") + msg);
+    sf::Packet packet;
+    packet << HEADER::MESSAGE << sf::Uint32(0) << msg;
+    for (auto &client : this->clients) {
+        client.tcpSocket->send(packet);
+    }
 }
 
 //Threaded function
