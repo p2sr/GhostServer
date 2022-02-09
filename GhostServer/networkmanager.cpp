@@ -350,8 +350,7 @@ void NetworkManager::Treat(sf::Packet& packet, unsigned short udp_port)
             std::string map;
             packet >> map;
             client->currentMap = map;
-            if(!client->spectator)
-                GHOST_LOG(client->name + " is now on " + map);
+            GHOST_LOG(client->name + " is now on " + map);
         }
 
         break;
