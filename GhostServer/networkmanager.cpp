@@ -93,7 +93,6 @@ NetworkManager::NetworkManager(const char *logfile)
     , serverPort(53000)
     , serverIP("localhost")
     , lastID(1) //0 == server
-    , hasStarted(false)
 {
     g_logFile = fopen(logfile, "w");
 }
@@ -207,6 +206,7 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
     for (auto& client : this->clients) {
         client.tcpSocket->send(packet);
     }
+    this->acceptingPlayers = false;
 }
 
 bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
@@ -245,10 +245,15 @@ void NetworkManager::CheckConnection()
     std::string model_name;
     std::string level_name;
     bool TCP_only;
-	Color col;
+    Color col;
     bool spectator;
 
     connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col >> spectator;
+
+    if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
+        // Refuse connection, since we're not currently accepting this type
+				return;
+    }
 
     client.ID = this->lastID++;
     client.IP = client.tcpSocket->getRemoteAddress();
@@ -258,10 +263,10 @@ void NetworkManager::CheckConnection()
     client.modelName = model_name;
     client.currentMap = level_name;
     client.TCP_only = TCP_only;
-	client.color = col;
+    client.color = col;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
-    client.spectator = this->hasStarted ? true : spectator; //People can break the run when joining in the middle of a run
+    client.spectator = spectator; //People can break the run when joining in the middle of a run
 
     this->selector.add(*client.tcpSocket);
 
@@ -282,7 +287,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    GHOST_LOG("New player: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") " + " @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    GHOST_LOG("New player: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 }

@@ -44,15 +44,19 @@ static void handle_cmd(char *line) {
 
         if (!strcmp(line, "help")) {
             puts("Available commands:");
-            puts("  help             show this list");
-            puts("  quit             terminate the server");
-            puts("  list             list all the currently connected clients");
-            puts("  countdown_set    set the pre/post cmds and countdown duration");
-            puts("  countdown        start a countdown");
-            puts("  disconnect       disconnect a client by name");
-            puts("  disconnect_id    disconnect a client by ID");
-            puts("  ban              ban connections from a certain IP by ghost name");
-            puts("  ban_id           ban connections from a certain IP by ghost ID");
+            puts("  help                show this list");
+            puts("  quit                terminate the server");
+            puts("  list                list all the currently connected clients");
+            puts("  countdown_set       set the pre/post cmds and countdown duration");
+            puts("  countdown           start a countdown");
+            puts("  disconnect          disconnect a client by name");
+            puts("  disconnect_id       disconnect a client by ID");
+            puts("  ban                 ban connections from a certain IP by ghost name");
+            puts("  ban_id              ban connections from a certain IP by ghost ID");
+            puts("  accept_players      start accepting connections from players");
+            puts("  refuse_players      stop accepting connections from players");
+            puts("  accept_spectators   start accepting connections from spectators");
+            puts("  refuse_spectators   stop accepting connections from spectators");
             return;
         }
 
@@ -121,6 +125,38 @@ static void handle_cmd(char *line) {
             g_current_cmd = CMD_BAN_ID;
             fputs("ID of player to ban: ", stdout);
             fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "accept_players")) {
+            g_network->ScheduleServerThread([]() {
+                g_network->acceptingPlayers = true;
+            });
+            puts("Now accepting connections from players");
+            return;
+        }
+
+        if (!strcmp(line, "refuse_players")) {
+            g_network->ScheduleServerThread([]() {
+                g_network->acceptingPlayers = false;
+            });
+            puts("Now refusing connections from players");
+            return;
+        }
+
+        if (!strcmp(line, "accept_spectators")) {
+            g_network->ScheduleServerThread([]() {
+                g_network->acceptingSpectators = true;
+            });
+            puts("Now accepting connections from spectators");
+            return;
+        }
+
+        if (!strcmp(line, "refuse_spectators")) {
+            g_network->ScheduleServerThread([]() {
+                g_network->acceptingSpectators = false;
+            });
+            puts("Now refusing connections from spectators");
             return;
         }
 
@@ -227,13 +263,13 @@ int main(int argc, char **argv) {
         }
     }
 
-		const char *logfile = "ghost_log";
+    const char *logfile = "ghost_log";
     if (argc >= 3) {
-				logfile = argv[2];
+        logfile = argv[2];
     }
 
-		NetworkManager network(logfile);
-		g_network = &network;
+    NetworkManager network(logfile);
+    g_network = &network;
 
     puts("Server starting up");
     network.StartServer(port);

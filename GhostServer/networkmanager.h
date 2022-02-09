@@ -74,7 +74,6 @@ class NetworkManager
 #endif
 
 private:
-
     bool isRunning;
 
     unsigned short int serverPort;
@@ -98,7 +97,8 @@ public:
     sf::UdpSocket udpSocket;
     std::vector<Client> clients;
     std::vector<sf::IpAddress> bannedIps;
-    bool hasStarted;
+    bool acceptingPlayers = true;
+    bool acceptingSpectators = true;
 
     void ScheduleServerThread(std::function<void()> func);
 
