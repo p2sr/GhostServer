@@ -94,7 +94,7 @@ NetworkManager::NetworkManager(const char *logfile)
     , serverIP("localhost")
     , lastID(1) //0 == server
 {
-    g_logFile = fopen(logfile, "w");
+    g_logFile = logfile ? fopen(logfile, "w") : NULL;
 }
 
 NetworkManager::~NetworkManager() {
