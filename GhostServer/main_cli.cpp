@@ -227,12 +227,11 @@ static void handle_cmd(char *line) {
         if (!strcmp(line, "whitelist")) {
             if (g_network->whitelist.size() == 0) {
                 puts("No players on whitelist");
-                return;
-            }
-
-            puts("Players on whitelist:");
-            for (auto& entry : g_network->whitelist) {
-                printf("  %s\n", entry.value.c_str());
+            } else {
+                puts("Players on whitelist:");
+                for (auto& entry : g_network->whitelist) {
+                    printf("  %s\n", entry.value.c_str());
+                }
             }
 
             if (g_network->whitelistEnabled)
