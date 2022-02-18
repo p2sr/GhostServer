@@ -70,7 +70,7 @@ static void handle_cmd(char *line) {
             puts("  whitelist_add_ip      add player to whitelist");
             puts("  whitelist_remove_name remove player from whitelist");
             puts("  whitelist_remove_ip   remove player from whitelist");
-            puts("  whitelist             print out all players on whitelist");
+            puts("  whitelist             print out all entries on whitelist");
             return;
         }
 
@@ -189,7 +189,9 @@ static void handle_cmd(char *line) {
         }
 
         if (!strcmp(line, "whitelist_disable")) {
-            g_network->whitelistEnabled = false;
+            g_network->ScheduleServerThread([] {
+                g_network->whitelistEnabled = false;
+            });
             puts("Whitelist now disabled");
             return;
         }
@@ -329,30 +331,34 @@ static void handle_cmd(char *line) {
 
     case CMD_WHITELIST_ENABLE:
         g_current_cmd = CMD_NONE;
-        g_network->whitelistEnabled = true;
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelistEnabled = true; 
 
-        if (!strcmp(line, "y")) {
-            g_network->ScheduleServerThread([] {
+            if (!strcmp(line, "y")) {
                 for (auto& client : g_network->clients) {
                     if (!g_network->IsOnWhitelist(client.name, client.IP)) {
                         g_network->DisconnectPlayer(client, "Not on whitelist");
                     }
                 }
-            });
-        }
+            }
+        });
 
         puts("Whitelist now enabled!");
         return;
 
     case CMD_WHITELIST_ADD_NAME:
         g_current_cmd = CMD_NONE;
-        g_network->whitelist.insert({ WhitelistEntryType::NAME, line });
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelist.insert({ WhitelistEntryType::NAME, line });
+        });
         printf("Added player %s to whitelist\n", line);
         return;
 
     case CMD_WHITELIST_ADD_IP:
         g_current_cmd = CMD_NONE;
-        g_network->whitelist.insert({ WhitelistEntryType::IP, line });
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelist.insert({ WhitelistEntryType::IP, line });
+        });
         printf("Added player IP %s to whitelist\n", line);
         return;
 
@@ -366,10 +372,11 @@ static void handle_cmd(char *line) {
         });
 
         if (index != g_network->whitelist.end()) {
-            g_network->whitelist.erase(index);
             auto clients = g_network->GetPlayerByName(_line);
 
             g_network->ScheduleServerThread([=]() {
+                g_network->whitelist.erase(index);
+
                 for (auto client : clients) {
                     g_network->DisconnectPlayer(*client, "Not on whitelist!");
                 }
