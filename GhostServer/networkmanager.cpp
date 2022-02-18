@@ -256,9 +256,9 @@ void NetworkManager::CheckConnection()
     }
 
     if (whitelistEnabled) {
-        auto index = whitelist.find(name);
-        if (index == whitelist.end()) {
-            // Refuse connection, since the name was not found in the whitelist
+        auto clientIp = client.tcpSocket->getRemoteAddress();
+        if (!IsOnWhitelist(name, clientIp)) {
+            // Refuse connection, since the player was not found in the whitelist
             return;
         }
     }
@@ -553,4 +553,22 @@ void NetworkManager::DoHeartbeats()
             }
         }
     }
+}
+
+bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
+    if (whitelist.empty())
+        return false;
+
+    auto index = std::find_if(whitelist.begin(), whitelist.end(), [&name, &IP](const WhitelistEntry& entry) {
+        switch (entry.type) {
+        case WhitelistEntryType::NAME:
+            return entry.value == name;
+        case WhitelistEntryType::IP:
+            return entry.value == IP.toString();
+        default:
+            return false;
+        }
+    });
+
+    return index != whitelist.end();
 }

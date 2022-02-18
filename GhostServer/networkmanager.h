@@ -65,6 +65,20 @@ struct Client {
     bool spectator;
 };
 
+enum class WhitelistEntryType {
+    NAME,
+    IP,
+};
+
+struct WhitelistEntry {
+    WhitelistEntryType type;
+    std::string value;
+
+    bool operator<(const WhitelistEntry& rhs) const {
+        return value < rhs.value;
+    }
+};
+
 #ifdef GHOST_GUI
 class NetworkManager : public QObject
 {
@@ -102,7 +116,7 @@ public:
     bool acceptingSpectators = true;
 
     bool whitelistEnabled = true; // false
-    std::set<std::string> whitelist;
+    std::set<WhitelistEntry> whitelist;
 
     void ScheduleServerThread(std::function<void()> func);
 
@@ -123,6 +137,8 @@ public:
 
     void BanClientIP(Client &cl);
     void ServerMessage(const char *msg);
+
+    bool IsOnWhitelist(std::string name, sf::IpAddress IP);
 
 #ifdef GHOST_GUI
 signals:

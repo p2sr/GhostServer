@@ -212,8 +212,13 @@ static void handle_cmd(char *line) {
 
             puts("Players on whitelist:");
             for (auto& entry : g_network->whitelist) {
-                printf("  %s\n", entry.c_str());
+                printf("  %s\n", entry.value.c_str());
             }
+
+            if (g_network->whitelistEnabled)
+                puts("Whitelist enabled");
+            else
+                puts("Whitelist disabled");
             return;
         }
         
@@ -311,24 +316,42 @@ static void handle_cmd(char *line) {
         if (!strcmp(line, "y")) {
             g_network->ScheduleServerThread([] {
                 for (auto& client : g_network->clients) {
-                    if (g_network->whitelist.find(client.name) == g_network->whitelist.end()) {
+                    if (!g_network->IsOnWhitelist(client.name, client.IP)) {
                         g_network->DisconnectPlayer(client, "Not on whitelist");
                     }
                 }
             });
         }
 
-        puts("Whitelist now disabled!");
+        puts("Whitelist now enabled!");
+        return;
 
     case CMD_WHITELIST_ADD:
         g_current_cmd = CMD_NONE;
-        g_network->whitelist.insert(line);
+        g_network->whitelist.insert({ WhitelistEntryType::NAME, line });
         printf("Added player %s to whitelist\n", line);
         return;
 
     case CMD_WHITELIST_REMOVE:
         g_current_cmd = CMD_NONE;
-        g_network->whitelist.erase(line);
+
+        auto index = std::find_if(g_network->whitelist.begin(), g_network->whitelist.end(), [&line](const WhitelistEntry& entry) {
+            return entry.type == WhitelistEntryType::NAME && entry.value == std::string(line);
+        });
+
+        if (index != g_network->whitelist.end()) {
+            std::string _line(line);
+
+            g_network->ScheduleServerThread([=]() {
+                g_network->whitelist.erase(index);
+                auto clients = g_network->GetPlayerByName(_line);
+
+                for (auto client : clients) {
+                    g_network->DisconnectPlayer(*client, "No on whitelist!");   
+                }
+            });
+        }
+
         printf("Removed player %s from whitelist\n", line);
         return;
     }
