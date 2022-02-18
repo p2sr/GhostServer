@@ -255,6 +255,14 @@ void NetworkManager::CheckConnection()
         return;
     }
 
+    if (whitelistEnabled) {
+        auto index = whitelist.find(name);
+        if (index == whitelist.end()) {
+            // Refuse connection, since the name was not found in the whitelist
+            return;
+        }
+    }
+
     client.ID = this->lastID++;
     client.IP = client.tcpSocket->getRemoteAddress();
     client.port = port;

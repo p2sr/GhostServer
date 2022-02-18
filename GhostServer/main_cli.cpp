@@ -16,6 +16,8 @@ static enum {
     CMD_BAN,
     CMD_BAN_ID,
     CMD_SERVER_MSG,
+    CMD_WHITELIST_ADD,
+    CMD_WHITELIST_REMOVE,
 } g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
@@ -59,6 +61,11 @@ static void handle_cmd(char *line) {
             puts("  accept_spectators   start accepting connections from spectators");
             puts("  refuse_spectators   stop accepting connections from spectators");
             puts("  server_msg          send all clients a message from the server");
+            puts("  whitelist_enable    enable whitelist");
+            puts("  whitelist_disable   disable whitelist");
+            puts("  whitelist_add       add player to whitelist");
+            puts("  whitelist_remove    remove player from whitelist");
+            puts("  whitelist           print out all players on whitelist");
             return;
         }
 
@@ -169,6 +176,45 @@ static void handle_cmd(char *line) {
             return;
         }
 
+        if (!strcmp(line, "whitelist_enable")) {
+            g_network->whitelistEnabled = true;
+            puts("Whitelist now enabled");
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_disable")) {
+            g_network->whitelistEnabled = false;
+            puts("Whitelist now disabled");
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_add")) {
+            g_current_cmd = CMD_WHITELIST_ADD;
+            fputs("Player to add: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_remove")) {
+            g_current_cmd = CMD_WHITELIST_REMOVE;
+            fputs("Player to remove: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist")) {
+            if (g_network->whitelist.size() == 0) {
+                puts("No players on whitelist");
+                return;
+            }
+
+            puts("Players on whitelist:");
+            for (auto& entry : g_network->whitelist) {
+                printf("  %s\n", entry.c_str());
+            }
+            return;
+        }
+        
         printf("Unknown command: '%s'\n", line);
         return;
 
@@ -254,6 +300,18 @@ static void handle_cmd(char *line) {
     case CMD_SERVER_MSG:
         g_current_cmd = CMD_NONE;
         g_network->ServerMessage(line);
+        return;
+
+    case CMD_WHITELIST_ADD:
+        g_current_cmd = CMD_NONE;
+        g_network->whitelist.insert(line);
+        printf("Added player %s to whitelist\n", line);
+        return;
+
+    case CMD_WHITELIST_REMOVE:
+        g_current_cmd = CMD_NONE;
+        g_network->whitelist.erase(line);
+        printf("Removed player %s from whitelist\n", line);
         return;
     }
 }

@@ -4,6 +4,7 @@
 #include <SFML/Network.hpp>
 
 #include <vector>
+#include <set>
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -99,6 +100,9 @@ public:
     std::vector<sf::IpAddress> bannedIps;
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
+
+    bool whitelistEnabled = true; // false
+    std::set<std::string> whitelist;
 
     void ScheduleServerThread(std::function<void()> func);
 
