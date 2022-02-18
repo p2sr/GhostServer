@@ -16,6 +16,7 @@ static enum {
     CMD_BAN,
     CMD_BAN_ID,
     CMD_SERVER_MSG,
+    CMD_WHITELIST_ENABLE,
     CMD_WHITELIST_ADD,
     CMD_WHITELIST_REMOVE,
 } g_current_cmd = CMD_NONE;
@@ -177,8 +178,9 @@ static void handle_cmd(char *line) {
         }
 
         if (!strcmp(line, "whitelist_enable")) {
-            g_network->whitelistEnabled = true;
-            puts("Whitelist now enabled");
+            g_current_cmd = CMD_WHITELIST_ENABLE;
+            fputs("Disconnect players not on whitelist? (y/N) ", stdout);
+            fflush(stdout);
             return;
         }
 
@@ -301,6 +303,22 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         g_network->ServerMessage(line);
         return;
+
+    case CMD_WHITELIST_ENABLE:
+        g_current_cmd = CMD_NONE;
+        g_network->whitelistEnabled = true;
+
+        if (!strcmp(line, "y")) {
+            g_network->ScheduleServerThread([] {
+                for (auto& client : g_network->clients) {
+                    if (g_network->whitelist.find(client.name) == g_network->whitelist.end()) {
+                        g_network->DisconnectPlayer(client, "Not on whitelist");
+                    }
+                }
+            });
+        }
+
+        puts("Whitelist now disabled!");
 
     case CMD_WHITELIST_ADD:
         g_current_cmd = CMD_NONE;
