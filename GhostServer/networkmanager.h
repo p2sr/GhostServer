@@ -115,7 +115,7 @@ public:
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
 
-    bool whitelistEnabled = true; // false
+    bool whitelistEnabled = false;
     std::set<WhitelistEntry> whitelist;
 
     void ScheduleServerThread(std::function<void()> func);
