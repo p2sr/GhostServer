@@ -121,6 +121,18 @@ Client* NetworkManager::GetClientByID(sf::Uint32 ID)
     return nullptr;
 }
 
+Client* NetworkManager::GetClientByIP(std::string IP) {
+    sf::IpAddress clientIP(IP);
+
+    for (auto& client : this->clients) {
+        if (client.IP == clientIP) {
+            return &client;
+        }
+    }
+
+    return nullptr;
+}
+
 bool NetworkManager::StartServer(const int port)
 {
     if (this->udpSocket.bind(port) != sf::Socket::Done) {

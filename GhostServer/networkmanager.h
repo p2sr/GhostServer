@@ -121,6 +121,7 @@ public:
     void ScheduleServerThread(std::function<void()> func);
 
     Client* GetClientByID(sf::Uint32 ID);
+    Client* GetClientByIP(std::string IP);
 
     bool StartServer(const int port);
     void StopServer();
