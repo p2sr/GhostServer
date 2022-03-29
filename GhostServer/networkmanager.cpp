@@ -30,6 +30,7 @@ static void file_log(std::string str) {
 
 #define HEARTBEAT_RATE 5000
 #define HEARTBEAT_RATE_UDP 1000 // We don't actually respond to these, they're just to keep the connection alive
+#define CONNECT_TIMEOUT 1500
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
@@ -236,6 +237,13 @@ void NetworkManager::CheckConnection()
     }
 
     sf::Packet connection_packet;
+    sf::SocketSelector conn_selector;
+    conn_selector.add(*client.tcpSocket);
+    conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT));
+    if (!conn_selector.isReady(*client.tcpSocket)) {
+        return;
+    }
+
     client.tcpSocket->receive(connection_packet);
 
     HEADER header;
