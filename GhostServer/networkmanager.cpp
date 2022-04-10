@@ -239,8 +239,7 @@ void NetworkManager::CheckConnection()
     sf::Packet connection_packet;
     sf::SocketSelector conn_selector;
     conn_selector.add(*client.tcpSocket);
-    conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT));
-    if (!conn_selector.isReady(*client.tcpSocket)) {
+    if (!conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT))) {
         return;
     }
 
