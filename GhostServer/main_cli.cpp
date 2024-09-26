@@ -16,6 +16,11 @@ static enum {
     CMD_BAN,
     CMD_BAN_ID,
     CMD_SERVER_MSG,
+    CMD_WHITELIST_ENABLE,
+    CMD_WHITELIST_ADD_NAME,
+    CMD_WHITELIST_ADD_IP,
+    CMD_WHITELIST_REMOVE_NAME,
+    CMD_WHITELIST_REMOVE_IP,
 } g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
@@ -45,20 +50,27 @@ static void handle_cmd(char *line) {
 
         if (!strcmp(line, "help")) {
             puts("Available commands:");
-            puts("  help                show this list");
-            puts("  quit                terminate the server");
-            puts("  list                list all the currently connected clients");
-            puts("  countdown_set       set the pre/post cmds and countdown duration");
-            puts("  countdown           start a countdown");
-            puts("  disconnect          disconnect a client by name");
-            puts("  disconnect_id       disconnect a client by ID");
-            puts("  ban                 ban connections from a certain IP by ghost name");
-            puts("  ban_id              ban connections from a certain IP by ghost ID");
-            puts("  accept_players      start accepting connections from players");
-            puts("  refuse_players      stop accepting connections from players");
-            puts("  accept_spectators   start accepting connections from spectators");
-            puts("  refuse_spectators   stop accepting connections from spectators");
-            puts("  server_msg          send all clients a message from the server");
+            puts("  help                  show this list");
+            puts("  quit                  terminate the server");
+            puts("  list                  list all the currently connected clients");
+            puts("  countdown_set         set the pre/post cmds and countdown duration");
+            puts("  countdown             start a countdown");
+            puts("  disconnect            disconnect a client by name");
+            puts("  disconnect_id         disconnect a client by ID");
+            puts("  ban                   ban connections from a certain IP by ghost name");
+            puts("  ban_id                ban connections from a certain IP by ghost ID");
+            puts("  accept_players        start accepting connections from players");
+            puts("  refuse_players        stop accepting connections from players");
+            puts("  accept_spectators     start accepting connections from spectators");
+            puts("  refuse_spectators     stop accepting connections from spectators");
+            puts("  server_msg            send all clients a message from the server");
+            puts("  whitelist_enable      enable whitelist");
+            puts("  whitelist_disable     disable whitelist");
+            puts("  whitelist_add_name    add player to whitelist");
+            puts("  whitelist_add_ip      add player to whitelist");
+            puts("  whitelist_remove_name remove player from whitelist");
+            puts("  whitelist_remove_ip   remove player from whitelist");
+            puts("  whitelist             print out all entries on whitelist");
             return;
         }
 
@@ -169,6 +181,66 @@ static void handle_cmd(char *line) {
             return;
         }
 
+        if (!strcmp(line, "whitelist_enable")) {
+            g_current_cmd = CMD_WHITELIST_ENABLE;
+            fputs("Disconnect players not on whitelist? (y/N) ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_disable")) {
+            g_network->ScheduleServerThread([] {
+                g_network->whitelistEnabled = false;
+            });
+            puts("Whitelist now disabled");
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_add_name")) {
+            g_current_cmd = CMD_WHITELIST_ADD_NAME;
+            fputs("Player to add: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_add_ip")) {
+            g_current_cmd = CMD_WHITELIST_ADD_IP;
+            fputs("Player IP to add: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_remove_name")) {
+            g_current_cmd = CMD_WHITELIST_REMOVE_NAME;
+            fputs("Player to remove: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist_remove_ip")) {
+            g_current_cmd = CMD_WHITELIST_REMOVE_IP;
+            fputs("Player IP to remove: ", stdout);
+            fflush(stdout);
+            return;
+        }
+
+        if (!strcmp(line, "whitelist")) {
+            if (g_network->whitelist.size() == 0) {
+                puts("No players on whitelist");
+            } else {
+                puts("Players on whitelist:");
+                for (auto& entry : g_network->whitelist) {
+                    printf("  %s\n", entry.value.c_str());
+                }
+            }
+
+            if (g_network->whitelistEnabled)
+                puts("(Whitelist enabled)");
+            else
+                puts("(Whitelist disabled)");
+            return;
+        }
+        
         printf("Unknown command: '%s'\n", line);
         return;
 
@@ -255,6 +327,89 @@ static void handle_cmd(char *line) {
         g_current_cmd = CMD_NONE;
         g_network->ServerMessage(line);
         return;
+
+    case CMD_WHITELIST_ENABLE:
+        g_current_cmd = CMD_NONE;
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelistEnabled = true; 
+
+            if (!strcmp(line, "y")) {
+                for (auto& client : g_network->clients) {
+                    if (!g_network->IsOnWhitelist(client.name, client.IP)) {
+                        g_network->DisconnectPlayer(client, "Not on whitelist");
+                    }
+                }
+            }
+        });
+
+        puts("Whitelist now enabled!");
+        return;
+
+    case CMD_WHITELIST_ADD_NAME:
+        g_current_cmd = CMD_NONE;
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelist.insert({ WhitelistEntryType::NAME, line });
+        });
+        printf("Added player %s to whitelist\n", line);
+        return;
+
+    case CMD_WHITELIST_ADD_IP:
+        g_current_cmd = CMD_NONE;
+        g_network->ScheduleServerThread([=] {
+            g_network->whitelist.insert({ WhitelistEntryType::IP, line });
+        });
+        printf("Added player IP %s to whitelist\n", line);
+        return;
+
+    case CMD_WHITELIST_REMOVE_NAME: {
+        g_current_cmd = CMD_NONE;
+
+        std::string _line(line);
+
+        auto index = std::find_if(g_network->whitelist.begin(), g_network->whitelist.end(), [&](const WhitelistEntry& entry) {
+            return entry.type == WhitelistEntryType::NAME && entry.value == _line;
+        });
+
+        if (index != g_network->whitelist.end()) {
+            auto clients = g_network->GetPlayerByName(_line);
+
+            g_network->ScheduleServerThread([=]() {
+                g_network->whitelist.erase(index);
+
+                for (auto client : clients) {
+                    g_network->DisconnectPlayer(*client, "Not on whitelist!");
+                }
+            });
+        }
+
+        printf("Removed player %s from whitelist\n", line);
+        return;
+    }
+
+    case CMD_WHITELIST_REMOVE_IP: {
+        g_current_cmd = CMD_NONE;
+
+        std::string _line(line);
+
+        auto index = std::find_if(g_network->whitelist.begin(), g_network->whitelist.end(), [&](const WhitelistEntry& entry) {
+            return entry.type == WhitelistEntryType::IP && entry.value == _line;
+        });
+
+        if (index != g_network->whitelist.end()) {
+            g_network->ScheduleServerThread([=]() {
+                g_network->whitelist.erase(index);
+
+                auto* client = g_network->GetClientByIP(_line);
+                if (client == nullptr)
+                    return;
+
+                g_network->DisconnectPlayer(*client, "Not on whitelist!");
+            });
+        }
+
+        printf("Removed player IP %s from whitelist\n", line);
+        return;
+    }
     }
 }
 
