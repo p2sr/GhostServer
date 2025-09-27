@@ -114,8 +114,8 @@ public:
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
 
     void CheckConnection();
-    void ReceiveUDPUpdates(std::vector<std::pair<unsigned short, sf::Packet>>& buffer);
-    void Treat(sf::Packet& packet, unsigned short udp_port);
+    void ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer);
+    void Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short udp_port);
 
     void BanClientIP(Client &cl);
     void ServerMessage(const char *msg);
