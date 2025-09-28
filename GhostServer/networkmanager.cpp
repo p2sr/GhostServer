@@ -122,6 +122,18 @@ Client* NetworkManager::GetClientByID(sf::Uint32 ID)
     return nullptr;
 }
 
+Client* NetworkManager::GetClientByIP(std::string IP) {
+    sf::IpAddress clientIP(IP);
+
+    for (auto& client : this->clients) {
+        if (client.IP == clientIP) {
+            return &client;
+        }
+    }
+
+    return nullptr;
+}
+
 bool NetworkManager::StartServer(const int port)
 {
     if (this->udpSocket.bind(port) != sf::Socket::Done) {
@@ -260,6 +272,14 @@ void NetworkManager::CheckConnection()
     if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
         // Refuse connection, since we're not currently accepting this type
         return;
+    }
+
+    if (whitelistEnabled) {
+        auto clientIp = client.tcpSocket->getRemoteAddress();
+        if (!IsOnWhitelist(name, clientIp)) {
+            // Refuse connection, since the player was not found in the whitelist
+            return;
+        }
     }
 
     client.ID = this->lastID++;
@@ -531,4 +551,22 @@ void NetworkManager::DoHeartbeats()
             }
         }
     }
+}
+
+bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
+    if (whitelist.empty())
+        return false;
+
+    auto index = std::find_if(whitelist.begin(), whitelist.end(), [&name, &IP](const WhitelistEntry& entry) {
+        switch (entry.type) {
+        case WhitelistEntryType::NAME:
+            return entry.value == name;
+        case WhitelistEntryType::IP:
+            return entry.value == IP.toString();
+        default:
+            return false;
+        }
+    });
+
+    return index != whitelist.end();
 }

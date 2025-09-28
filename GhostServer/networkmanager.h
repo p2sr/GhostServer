@@ -4,6 +4,7 @@
 #include <SFML/Network.hpp>
 
 #include <vector>
+#include <set>
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -64,6 +65,20 @@ struct Client {
     bool spectator;
 };
 
+enum class WhitelistEntryType {
+    NAME,
+    IP,
+};
+
+struct WhitelistEntry {
+    WhitelistEntryType type;
+    std::string value;
+
+    bool operator<(const WhitelistEntry& rhs) const {
+        return value < rhs.value;
+    }
+};
+
 #ifdef GHOST_GUI
 class NetworkManager : public QObject
 {
@@ -100,9 +115,13 @@ public:
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
 
+    bool whitelistEnabled = false;
+    std::set<WhitelistEntry> whitelist;
+
     void ScheduleServerThread(std::function<void()> func);
 
     Client* GetClientByID(sf::Uint32 ID);
+    Client* GetClientByIP(std::string IP);
 
     bool StartServer(const int port);
     void StopServer();
@@ -119,6 +138,8 @@ public:
 
     void BanClientIP(Client &cl);
     void ServerMessage(const char *msg);
+
+    bool IsOnWhitelist(std::string name, sf::IpAddress IP);
 
 #ifdef GHOST_GUI
 signals:
