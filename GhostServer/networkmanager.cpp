@@ -355,7 +355,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
         break;
     }
     case HEADER::STOP_SERVER:
-        this->StopServer();
+        // this->StopServer();
         break;
     case HEADER::MAP_CHANGE: {
         std::string map;
