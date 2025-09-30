@@ -95,7 +95,7 @@ jobs:
           copy /Y .\GhostServer.exe .\GhostServer-win\
           copy /Y .\GhostServer_CLI.exe .\GhostServer-win\
           cd GhostServer-win
-          ${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe --release --no-compiler-runtime .\GhostServer.exe
+          ${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe --release --no-compiler-runtime --no-system-d3d-compiler --no-opengl-sw .\GhostServer.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
