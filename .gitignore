@@ -5,6 +5,9 @@
 # Executables
 *.exe
 *.db
+*.pdb
+*.ilk
+*.recipe
 *.log
 *.tlog
 GhostServer/Debug/

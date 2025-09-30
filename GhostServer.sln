@@ -7,14 +7,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GhostServer", "GhostServer\
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
+		DebugGUI|x86 = DebugGUI|x86
+		ReleaseGUI|x86 = ReleaseGUI|x86
+		DebugCLI|x86 = DebugCLI|x86
+		ReleaseCLI|x86 = ReleaseCLI|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.Debug|x86.ActiveCfg = Debug|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.Debug|x86.Build.0 = Debug|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.Release|x86.ActiveCfg = Release|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.Release|x86.Build.0 = Release|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x86.ActiveCfg = DebugGUI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x86.Build.0 = DebugGUI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x86.ActiveCfg = ReleaseGUI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x86.Build.0 = ReleaseGUI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x86.ActiveCfg = DebugCLI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x86.Build.0 = DebugCLI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x86.ActiveCfg = ReleaseCLI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x86.Build.0 = ReleaseCLI|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
