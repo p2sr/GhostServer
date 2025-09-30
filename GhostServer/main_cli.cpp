@@ -448,7 +448,10 @@ int main(int argc, char **argv) {
     g_network = &network;
 
     puts("Server starting up");
-    network.StartServer(port);
+    if (!network.StartServer(port)) {
+        printf("Failed to start server on port %d", port);
+        return 1;
+    }
     while (!g_should_stop) {
 #ifdef _WIN32
         if (_kbhit()) {

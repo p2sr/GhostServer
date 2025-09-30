@@ -48,6 +48,7 @@
     <TargetExt>.exe</TargetExt>
     <OutDir>$(SolutionDir)GhostServer\Debug\CLI\</OutDir>
     <IntDir>$(SolutionDir)GhostServer\Debug\CLI\obj\</IntDir>
+    <QtMsBuild></QtMsBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCLI|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -56,6 +57,7 @@
     <TargetExt>.exe</TargetExt>
     <OutDir>$(SolutionDir)GhostServer\Release\CLI\</OutDir>
     <IntDir>$(SolutionDir)GhostServer\Release\CLI\obj\</IntDir>
+    <QtMsBuild></QtMsBuild>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -74,11 +76,11 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='DebugGUI|Win32'">
-    <QtInstall>msvc2017</QtInstall>
+    <QtInstall>msvc2019</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='ReleaseGUI|Win32'">
-    <QtInstall>msvc2017</QtInstall>
+    <QtInstall>msvc2019</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='DebugCLI|Win32'">
@@ -111,7 +113,10 @@
       <AdditionalDependencies>sfml-system-s-d.lib;sfml-network-s-d.lib;winmm.lib;ws2_32.lib;$(Qt_LIBS_);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer.exe"</Command>
+      <Command>
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseGUI|Win32'">
@@ -132,7 +137,10 @@
       <AdditionalDependencies>sfml-system-s.lib;sfml-network-s.lib;winmm.lib;ws2_32.lib;$(Qt_LIBS_);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer.exe"</Command>
+      <Command>
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugCLI|Win32'">
@@ -154,7 +162,10 @@
       <AdditionalDependencies>sfml-system-s-d.lib;sfml-network-s-d.lib;winmm.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"</Command>
+      <Command>
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCLI|Win32'">
@@ -176,7 +187,10 @@
       <AdditionalDependencies>sfml-system-s.lib;sfml-network-s.lib;winmm.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"</Command>
+      <Command>
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

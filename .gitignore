@@ -2,7 +2,7 @@
 *.o
 *.obj
 
-# Executables
+# Build artifacts
 *.exe
 *.db
 *.pdb
@@ -13,11 +13,10 @@
 GhostServer/Debug/
 GhostServer/Release/
 .vs/GhostServer/v16/.suo
-
-# Linux build artifacts
 GhostServer/ui_mainwindow.h
 GhostServer/*_qt.cpp
 config.mk
+copy.bat
 ghost_server
 ghost_server_cli
 

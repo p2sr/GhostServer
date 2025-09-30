@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>FrenchSaves10TicksBtw</string>
+   <string>Ghost Server</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -73,7 +73,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Pre countdowncommands</string>
+               <string>Pre-countdown commands</string>
               </property>
              </widget>
             </item>
@@ -96,7 +96,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Post countdown</string>
+               <string>Post-countdown commands</string>
               </property>
              </widget>
             </item>
@@ -119,7 +119,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_6">
               <property name="text">
-               <string>Duration</string>
+               <string>Countdown duration (seconds)</string>
               </property>
              </widget>
             </item>
@@ -186,7 +186,19 @@
              </font>
             </property>
             <property name="text">
-             <string>More settings comming soon TM (maybe...)</string>
+             <string>More settings coming soon TM (maybe...)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>French saves 10 ticks, by the way.</string>
             </property>
            </widget>
           </item>

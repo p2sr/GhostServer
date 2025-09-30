@@ -28,7 +28,7 @@ MainWindow::~MainWindow()
 void MainWindow::StartServer()
 {
     if (!this->network.StartServer(ui.port->value())) {
-        this->AddEventLog("Server didn't start ! Please check settings !");
+        this->AddEventLog("Server didn't start! Please check settings!");
         return;
     }
 
@@ -59,7 +59,7 @@ void MainWindow::ResetServer()
 void MainWindow::StartCountdown()
 {
     if (!this->isRunning) {
-        this->AddEventLog("Please start the server before starting a countdown, you moron !");
+        this->AddEventLog("Please start the server before starting a countdown, you moron!");
         return;
     }
 
@@ -87,8 +87,7 @@ void MainWindow::StartCountdown()
     int duration = ui.duration->value();
     this->network.StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
 
-    this->AddEventLog("Countdown will start in " + QString::number(duration));
-    this->AddEventLog("Pre-command : " + pre_cmds);
-    this->AddEventLog("Post-command : " + post_cmds);
+    this->AddEventLog("Countdown starting: " + QString::number(duration) + " seconds");
+    this->AddEventLog("Pre-command: " + pre_cmds);
+    this->AddEventLog("Post-command: " + post_cmds);
 }
-
