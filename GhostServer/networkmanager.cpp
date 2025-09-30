@@ -111,6 +111,18 @@ void NetworkManager::ScheduleServerThread(std::function<void()> func) {
     g_server_queue_mutex.unlock();
 }
 
+std::vector<Client *> NetworkManager::GetPlayerByName(std::string name)
+{
+    std::vector<Client *> matches;
+    for (auto &client : this->clients) {
+        if (client.name == name) {
+            matches.push_back(&client);
+        }
+    }
+
+    return matches;
+}
+
 Client* NetworkManager::GetClientByID(sf::Uint32 ID)
 {
     for (auto& client : this->clients) {
@@ -122,16 +134,14 @@ Client* NetworkManager::GetClientByID(sf::Uint32 ID)
     return nullptr;
 }
 
-Client* NetworkManager::GetClientByIP(std::string IP) {
-    sf::IpAddress clientIP(IP);
-
+std::vector<Client *> NetworkManager::GetClientByIP(sf::IpAddress ip) {
+    std::vector<Client *> clients;
     for (auto& client : this->clients) {
-        if (client.IP == clientIP) {
-            return &client;
+        if (client.IP == ip) {
+            clients.push_back(&client);
         }
     }
-
-    return nullptr;
+    return clients;
 }
 
 bool NetworkManager::StartServer(const int port)
@@ -198,18 +208,6 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
     }
-}
-
-std::vector<Client *> NetworkManager::GetPlayerByName(std::string name)
-{
-    std::vector<Client *> matches;
-    for (auto &client : this->clients) {
-        if (client.name == name) {
-            matches.push_back(&client);
-        }
-    }
-
-    return matches;
 }
 
 void NetworkManager::StartCountdown(const std::string preCommands, const std::string postCommands, const int duration)

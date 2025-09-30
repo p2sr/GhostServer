@@ -407,11 +407,10 @@ static void handle_cmd(char *line) {
             g_network->ScheduleServerThread([=]() {
                 g_network->whitelist.erase(index);
 
-                auto* client = g_network->GetClientByIP(_line);
-                if (client == nullptr)
-                    return;
-
-                g_network->DisconnectPlayer(*client, "Not on whitelist!");
+                auto clients = g_network->GetClientByIP(_line);
+                for (auto client : clients) {
+                    g_network->DisconnectPlayer(*client, "Not on whitelist!");
+                }
             });
         }
 
