@@ -15,7 +15,7 @@
 
 static volatile int g_should_stop = 0;
 
-static enum {
+enum CommandType {
     CMD_NONE,
     CMD_COUNTDOWN_SET,
     CMD_DISCONNECT,
@@ -28,7 +28,8 @@ static enum {
     CMD_WHITELIST_ADD_IP,
     CMD_WHITELIST_REMOVE_NAME,
     CMD_WHITELIST_REMOVE_IP,
-} g_current_cmd = CMD_NONE;
+};
+static CommandType g_current_cmd = CMD_NONE;
 
 static char *g_entered_pre;
 static char *g_entered_post;
