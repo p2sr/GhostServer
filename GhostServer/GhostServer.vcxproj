@@ -114,7 +114,7 @@
     </Link>
     <PostBuildEvent>
       <Command>
-        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer.exe"
         if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
       </Command>
     </PostBuildEvent>
@@ -138,7 +138,7 @@
     </Link>
     <PostBuildEvent>
       <Command>
-        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer_CLI.exe"
+        copy /Y "$(TargetPath)" "$(SolutionDir)GhostServer.exe"
         if exist "$(SolutionDir)copy.bat" call "$(SolutionDir)copy.bat"
       </Command>
     </PostBuildEvent>
