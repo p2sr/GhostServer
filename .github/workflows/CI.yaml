@@ -21,6 +21,9 @@ on:
 permissions:
   contents: read
 
+env:
+  QT_VS_ADDIN_URL: https://ftp.fau.de/qtproject/archive/vsaddin/3.3.1/qt-vsaddin-msvc2022-x64-3.3.1.vsix
+
 jobs:
   build-lin:
     name: Linux Build
@@ -54,14 +57,42 @@ jobs:
         with: { fetch-depth: 0 }
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-      # - name: Build GUI
-      #   run: msbuild -m -p:"Configuration=DebugGUI;Platform=x86" GhostServer.sln
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: 'true'
+          cache-key-prefix: 'cache-qt'
+          version: '5.15.2'
+          arch: 'win32_msvc2019'
+          dir: ${{ runner.temp }}/qt
+          setup-python: 'false'
+      - name: Cache QtMsBuild tools
+        id: cache-qtmsbuild-tools
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/ExternalLibraries/qtvsaddin
+          key: ${{ runner.os }}-qt-msbuild-cache
+      - name: Get QtMsBuild tools
+        if: steps.cache-qtmsbuild-tools.outputs.cache-hit != 'true'
+        run: |
+          Invoke-WebRequest -Uri ${{env.QT_VS_ADDIN_URL}} -MaximumRetryCount 10 -RetryIntervalSec 30 -OutFile vspackage.vsix
+          Expand-Archive vspackage.vsix -DestinationPath ${{github.workspace}}/ExternalLibraries/qtvsaddin
+
+      - name: Build GUI
+        env:
+          QtToolsPath: ${{ env.QT_ROOT_DIR }}\bin
+          QtMsBuild: ${{github.workspace}}/ExternalLibraries/qtvsaddin/QtMsBuild
+        run: msbuild -m -p:"Configuration=DebugGUI;Platform=x86" GhostServer.sln
+
       - name: Build CLI
         run: msbuild -m -p:"Configuration=DebugCLI;Platform=x86" GhostServer.sln
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GhostServer-win # ./GhostServer.exe
+          name: GhostServer-win
           path: |
+            ./GhostServer.exe
             ./GhostServer_CLI.exe
           if-no-files-found: error
