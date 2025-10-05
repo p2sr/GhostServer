@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
         g_should_stop = 1;
     });
 
-    if (argc > 3) {
+    if (argc > 3 || (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")))) {
         printf("Usage: %s [port] [logfile]\n", argv[0]);
         return 1;
     }
