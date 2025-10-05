@@ -62,6 +62,8 @@ sudo apt-get install g++ qt6-base-dev
 sudo pacman -S gcc qt6-base
 ```
 
+Set Qt variables `UIC`, `MOC`, and `RCC` in config.mk if necessary.
+
 ```bash
 make -j$(nproc)
 ```
