@@ -4,6 +4,7 @@ CXX=g++
 SDIR=GhostServer
 ODIR=obj
 
+# If this is the wrong version, try /usr/lib/qt6/uic
 UIC=uic
 MOC=moc
 
@@ -16,11 +17,11 @@ OBJS_CLI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/cli/%.o, $(SRCS_CLI))
 DEPS=$(OBJS_GUI:%.o=%.d)
 
 CXXFLAGS=-std=c++17 -fPIC -Ilib/SFML/include -DSFML_STATIC
-CXXFLAGS_GUI=-DGHOST_GUI $(shell pkg-config --cflags Qt5Widgets)
+CXXFLAGS_GUI=-DGHOST_GUI $(shell pkg-config --cflags Qt6Widgets)
 CXXFLAGS_CLI=
 
 LDFLAGS=-lpthread -Llib/SFML/lib/linux -lsfml-network -lsfml-system
-LDFLAGS_GUI=$(shell pkg-config --libs Qt5Widgets)
+LDFLAGS_GUI=$(shell pkg-config --libs Qt6Widgets)
 LDFLAGS_CLI=
 
 -include config.mk

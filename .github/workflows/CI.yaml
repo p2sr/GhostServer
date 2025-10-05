@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  QT_VS_ADDIN_URL: https://ftp.fau.de/qtproject/archive/vsaddin/3.3.1/qt-vsaddin-msvc2022-x64-3.3.1.vsix
+  QT_VS_ADDIN_URL: https://download.qt.io/archive/vsaddin/3.4.1/qt-vsaddin-msvc2022-x64-3.4.1.vsix
 
 jobs:
   build-lin:
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - name: Install Dependencies
-        run: sudo apt-get install -y g++-10-multilib qtbase5-dev
+        run: sudo apt-get install -y g++-10-multilib qtbase6-dev
       - name: Build
         run: make -j$(nproc)
       - name: Upload Artifact
@@ -63,8 +63,8 @@ jobs:
         with:
           cache: 'true'
           cache-key-prefix: 'cache-qt'
-          version: '5.15.2'
-          arch: 'win32_msvc2019'
+          version: '6.10.0'
+          arch: 'win64_msvc2022_64'
           dir: ${{ runner.temp }}/qt
           setup-python: 'false'
       - name: Cache QtMsBuild tools
@@ -83,10 +83,10 @@ jobs:
         env:
           QtToolsPath: ${{ env.QT_ROOT_DIR }}\bin
           QtMsBuild: ${{github.workspace}}/ExternalLibraries/qtvsaddin/QtMsBuild
-        run: msbuild -m -p:"Configuration=DebugGUI;Platform=x86" GhostServer.sln
+        run: msbuild -m -p:Configuration=DebugGUI GhostServer.sln
 
       - name: Build CLI
-        run: msbuild -m -p:"Configuration=DebugCLI;Platform=x86" GhostServer.sln
+        run: msbuild -m -p:Configuration=DebugCLI GhostServer.sln
 
       - name: Deploy Qt
         shell: cmd

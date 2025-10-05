@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -7,20 +6,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GhostServer", "GhostServer\
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		DebugGUI|x86 = DebugGUI|x86
-		ReleaseGUI|x86 = ReleaseGUI|x86
-		DebugCLI|x86 = DebugCLI|x86
-		ReleaseCLI|x86 = ReleaseCLI|x86
+		DebugGUI|x64 = DebugGUI|x64
+		ReleaseGUI|x64 = ReleaseGUI|x64
+		DebugCLI|x64 = DebugCLI|x64
+		ReleaseCLI|x64 = ReleaseCLI|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x86.ActiveCfg = DebugGUI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x86.Build.0 = DebugGUI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x86.ActiveCfg = ReleaseGUI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x86.Build.0 = ReleaseGUI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x86.ActiveCfg = DebugCLI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x86.Build.0 = DebugCLI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x86.ActiveCfg = ReleaseCLI|Win32
-		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x86.Build.0 = ReleaseCLI|Win32
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x64.ActiveCfg = DebugGUI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugGUI|x64.Build.0 = DebugGUI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x64.ActiveCfg = ReleaseGUI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseGUI|x64.Build.0 = ReleaseGUI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x64.ActiveCfg = DebugCLI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.DebugCLI|x64.Build.0 = DebugCLI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x64.ActiveCfg = ReleaseCLI|x64
+		{C861F016-E7B0-4FCA-9E4F-82CE43223C5F}.ReleaseCLI|x64.Build.0 = ReleaseCLI|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
