@@ -69,10 +69,12 @@
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='DebugGUI|x64'">
     <QtInstall>msvc2022</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
+    <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='ReleaseGUI|x64'">
     <QtInstall>msvc2022</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
+    <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='DebugCLI|x64'">
     <QtInstall></QtInstall>
@@ -114,6 +116,7 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <!-- FIXME: Release builds broken -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseGUI|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
@@ -158,6 +161,7 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <!-- FIXME: Release builds broken -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCLI|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
