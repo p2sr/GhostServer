@@ -4,6 +4,9 @@ CXX=g++
 SDIR=GhostServer
 ODIR=obj
 
+UIC=uic
+MOC=moc
+
 SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp
 OBJS_GUI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/gui/%.o, $(SRCS_GUI))
 
@@ -44,7 +47,7 @@ $(ODIR)/cli/%.o: $(SDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_CLI) -MMD -c $< -o $@
 
 $(SDIR)/ui_mainwindow.h: $(SDIR)/mainwindow.ui
-	uic $< >$@
+	$(UIC) $< -o $@
 
 $(SDIR)/%_qt.cpp: $(SDIR)/%.h
-	cd $(SDIR); moc $(notdir $<) -o $(notdir $@) -DGHOST_GUI
+	cd $(SDIR); $(MOC) $(notdir $<) -o $(notdir $@) -DGHOST_GUI

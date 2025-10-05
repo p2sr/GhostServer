@@ -21,11 +21,11 @@ static void file_log(std::string str) {
 }
 
 #ifdef GHOST_GUI
-#include <QVector>
-#define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
+# include <QVector>
+# define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
 #else
-#include <stdio.h>
-#define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
+# include <stdio.h>
+# define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
 #endif
 
 #define HEARTBEAT_RATE 5000
@@ -36,7 +36,7 @@ static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
 static std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 
-//DataGhost
+// DataGhost
 
 sf::Packet& operator>>(sf::Packet& packet, Vector& vec)
 {
@@ -62,7 +62,7 @@ sf::Packet& operator<<(sf::Packet& packet, const DataGhost& dataGhost)
     return packet << dataGhost.position << dataGhost.view_angle << data;
 }
 
-//HEADER
+// HEADER
 
 sf::Packet& operator>>(sf::Packet& packet, HEADER& header)
 {
@@ -93,7 +93,7 @@ NetworkManager::NetworkManager(const char *logfile)
     : isRunning(false)
     , serverPort(53000)
     , serverIP("localhost")
-    , lastID(1) //0 == server
+    , lastID(1) // 0 == server
 {
     g_logFile = logfile ? fopen(logfile, "w") : NULL;
 }
@@ -146,13 +146,20 @@ std::vector<Client *> NetworkManager::GetClientByIP(sf::IpAddress ip) {
 
 bool NetworkManager::StartServer(const int port)
 {
+    if (this->isRunning) {
+        GHOST_LOG("Server is already running!");
+        return false;
+    }
+
     if (this->udpSocket.bind(port) != sf::Socket::Done) {
+        GHOST_LOG("Failed to bind UDP socket to port " + std::to_string(port) + ".");
         this->udpSocket.unbind();
         this->listener.close();
         return false;
     }
 
     if (this->listener.listen(port) != sf::Socket::Done) {
+        GHOST_LOG("Failed to bind listener to port " + std::to_string(port) + ".");
         this->udpSocket.unbind();
         this->listener.close();
         return false;
@@ -195,12 +202,13 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
     int id = 0;
     int toErase = -1;
     for (; id < this->clients.size(); ++id) {
-        if (this->clients[id].IP != c.IP) {
-            this->clients[id].tcpSocket->send(packet);
+        auto& client = this->clients[id];
+        if (client.IP != c.IP) {
+            client.tcpSocket->send(packet);
         } else {
-            GHOST_LOG("Player " + this->clients[id].name + " has disconnected! Reason: " + reason);
-            this->selector.remove(*this->clients[id].tcpSocket);
-            this->clients[id].tcpSocket->disconnect();
+            GHOST_LOG("Disconnect: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
+            this->selector.remove(*client.tcpSocket);
+            client.tcpSocket->disconnect();
             toErase = id;
         }
     }
@@ -212,6 +220,13 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
 
 void NetworkManager::StartCountdown(const std::string preCommands, const std::string postCommands, const int duration)
 {
+    if (!this->isRunning) {
+        GHOST_LOG("Server is not running!");
+        return;
+    }
+    GHOST_LOG("Countdown starting: " + std::to_string(duration) + " seconds");
+    GHOST_LOG("Pre-command: " + preCommands);
+    GHOST_LOG("Post-command: " + postCommands);
     sf::Packet packet;
     packet << HEADER::COUNTDOWN << sf::Uint32(0) << sf::Uint8(0) << sf::Uint32(duration) << preCommands << postCommands;
     for (auto& client : this->clients) {
@@ -291,14 +306,14 @@ void NetworkManager::CheckConnection()
     client.color = col;
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
-    client.spectator = spectator; //People can break the run when joining in the middle of a run
+    client.spectator = spectator; // People can break the run when joining in the middle of a run
 
     this->selector.add(*client.tcpSocket);
 
     sf::Packet packet_new_client;
 
-    packet_new_client << client.ID; //Send Client's ID
-    packet_new_client << sf::Uint32(this->clients.size()); //Send every players informations
+    packet_new_client << client.ID; // Send Client's ID
+    packet_new_client << sf::Uint32(this->clients.size()); // Send every players informations
     for (auto& c : this->clients) {
         packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str() << c.color << c.spectator;
     }
@@ -312,7 +327,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    GHOST_LOG("New player: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    GHOST_LOG("Connection: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 }
@@ -448,7 +463,7 @@ void NetworkManager::ServerMessage(const char *msg) {
     }
 }
 
-//Threaded function
+// Threaded function
 void NetworkManager::RunServer()
 {
     this->isRunning = true;
@@ -489,7 +504,7 @@ void NetworkManager::RunServer()
             lastUpdate = now;
         }
 
-        //UDP
+        // UDP
         std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>> buffer;
         this->ReceiveUDPUpdates(buffer);
         for (auto [packet, ip, port] : buffer) {

@@ -15,14 +15,15 @@ MainWindow::MainWindow(QWidget* parent)
     this->isRunning = false;
     ui.resetButton->setVisible(false);
 
-    connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(&network, &NetworkManager::OnNewEvent, this, &MainWindow::AddEventLog);
+    connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(ui.startCountdown, &QPushButton::clicked, this, &MainWindow::StartCountdown);
+    connect(ui.resetButton, &QPushButton::clicked, this, &MainWindow::ResetServer);
 }
 
 MainWindow::~MainWindow()
 {
-    this->network.StopServer();
+    if (this->isRunning) this->network.StopServer();
 }
 
 void MainWindow::StartServer()
@@ -35,7 +36,7 @@ void MainWindow::StartServer()
     this->isRunning = true;
     ui.serverButton->setText("Stop server");
     ui.resetButton->setVisible(true);
-    disconnect(ui.serverButton, nullptr, nullptr, nullptr);
+    disconnect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StopServer);
 }
 
@@ -47,7 +48,7 @@ void MainWindow::StopServer()
     ui.serverButton->setText("Start server");
     ui.resetButton->setVisible(false);
 
-    disconnect(ui.serverButton, nullptr, nullptr, nullptr);
+    disconnect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StopServer);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
 }
 
@@ -58,11 +59,6 @@ void MainWindow::ResetServer()
 
 void MainWindow::StartCountdown()
 {
-    if (!this->isRunning) {
-        this->AddEventLog("Please start the server before starting a countdown, you moron!");
-        return;
-    }
-
     QTextDocument* pre_doc = ui.preCommandList->document();
     QString pre_cmds = "";
     for (int i = 0; i < pre_doc->lineCount(); ++i) {
@@ -86,8 +82,4 @@ void MainWindow::StartCountdown()
 
     int duration = ui.duration->value();
     this->network.StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
-
-    this->AddEventLog("Countdown starting: " + QString::number(duration) + " seconds");
-    this->AddEventLog("Pre-command: " + pre_cmds);
-    this->AddEventLog("Post-command: " + post_cmds);
 }

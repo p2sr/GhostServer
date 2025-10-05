@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
     });
 
     if (argc > 3) {
-        printf("Usage: %s [port]\n", argv[0]);
+        printf("Usage: %s [port] [logfile]\n", argv[0]);
         return 1;
     }
 
@@ -449,7 +449,7 @@ int main(int argc, char **argv) {
 
     puts("Server starting up");
     if (!network.StartServer(port)) {
-        printf("Failed to start server on port %d", port);
+        printf("Failed to start server on port %d\n", port);
         return 1;
     }
     while (!g_should_stop) {
