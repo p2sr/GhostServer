@@ -56,7 +56,7 @@ $qt_path\6.10.0\msvc2022_64\bin\windeployqt.exe --release --no-compiler-runtime 
 
 ```bash
 # Debian/Ubuntu
-sudo apt-get install g++ qtbase6-dev 
+sudo apt-get install g++ qt6-base-dev 
 
 # Arch
 sudo pacman -S gcc qt6-base

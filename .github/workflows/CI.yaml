@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - name: Install Dependencies
-        run: sudo apt-get install -y g++-10-multilib qtbase6-dev
+        run: sudo apt-get install -y g++-10-multilib qt6-base-dev
       - name: Build
         run: make -j$(nproc)
       - name: Upload Artifact
