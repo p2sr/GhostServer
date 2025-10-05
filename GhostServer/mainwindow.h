@@ -11,7 +11,7 @@ class MainWindow : public QWidget
 
 private:
 
-	NetworkManager network;
+    NetworkManager *network;
     bool isRunning;
 
 public:

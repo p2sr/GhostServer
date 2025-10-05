@@ -15,7 +15,9 @@ MainWindow::MainWindow(QWidget* parent)
     this->isRunning = false;
     ui.resetButton->setVisible(false);
 
-    connect(&network, &NetworkManager::OnNewEvent, this, &MainWindow::AddEventLog);
+    network = new NetworkManager("ghost_log");
+
+    connect(network, &NetworkManager::OnNewEvent, this, &MainWindow::AddEventLog);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(ui.startCountdown, &QPushButton::clicked, this, &MainWindow::StartCountdown);
     connect(ui.resetButton, &QPushButton::clicked, this, &MainWindow::ResetServer);
@@ -23,12 +25,13 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
-    if (this->isRunning) this->network.StopServer();
+    if (this->isRunning) this->network->StopServer();
+    delete this->network;
 }
 
 void MainWindow::StartServer()
 {
-    if (!this->network.StartServer(ui.port->value())) {
+    if (!this->network->StartServer(ui.port->value())) {
         this->AddEventLog("Server didn't start! Please check settings!");
         return;
     }
@@ -42,7 +45,7 @@ void MainWindow::StartServer()
 
 void MainWindow::StopServer()
 {
-    this->network.StopServer();
+    this->network->StopServer();
 
     this->isRunning = false;
     ui.serverButton->setText("Start server");
@@ -81,5 +84,5 @@ void MainWindow::StartCountdown()
     }
 
     int duration = ui.duration->value();
-    this->network.StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
+    this->network->StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
 }
