@@ -30,6 +30,7 @@ static void file_log(std::string str) {
 
 #define HEARTBEAT_RATE 5000
 #define HEARTBEAT_RATE_UDP 1000 // We don't actually respond to these, they're just to keep the connection alive
+#define UPDATE_RATE 50
 #define CONNECT_TIMEOUT 1500
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
@@ -487,7 +488,7 @@ void NetworkManager::RunServer()
             lastHeartbeatUdp = now;
         }
 
-        if (now > lastUpdate + std::chrono::milliseconds(50)) {
+        if (now > lastUpdate + std::chrono::milliseconds(UPDATE_RATE)) {
             // Send bulk update packet
             sf::Packet packet;
             packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
@@ -511,7 +512,7 @@ void NetworkManager::RunServer()
             this->Treat(packet, ip, port);
         }
 
-        if (this->selector.wait(sf::milliseconds(50))) { // If a packet is received
+        if (this->selector.wait(sf::milliseconds(UPDATE_RATE))) { // If a packet is received
             if (this->selector.isReady(this->listener)) {
                 this->CheckConnection(); // A player wants to connect
             } else {
