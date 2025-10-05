@@ -4,10 +4,10 @@ CXX=g++
 SDIR=GhostServer
 ODIR=obj
 
-# If this is the wrong version, try /usr/lib/qt6/uic
-UIC=uic
-MOC=moc
-RCC=rcc
+QtPath=/usr/lib/qt6/
+UIC=$(QtPath)uic
+MOC=$(QtPath)moc
+RCC=$(QtPath)rcc
 
 SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp $(SDIR)/GhostServer_qrc.cpp
 OBJS_GUI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/gui/%.o, $(SRCS_GUI))
