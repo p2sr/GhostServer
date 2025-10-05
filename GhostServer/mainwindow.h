@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QWidget>
+
+#include "commands.h"
 #include "ui_mainwindow.h"
 #include "networkmanager.h"
 
@@ -24,6 +26,7 @@ private:
 	void StartServer();
     void StopServer();
     void ResetServer();
+    void SubmitCommand();
 
 public slots:
     void AddEventLog(QString log) {ui.textBrowser->append(log);}

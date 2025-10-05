@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>978</width>
+    <width>1020</width>
     <height>600</height>
    </rect>
   </property>
@@ -38,7 +38,32 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QTextBrowser" name="textBrowser"/>
+            <widget class="QTextBrowser" name="textBrowser">
+             <property name="font">
+              <font>
+               <family>Monospace</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="commandInputLayout">
+             <item>
+              <widget class="QLineEdit" name="commandInput">
+               <property name="placeholderText">
+                <string>Enter command...</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="submitCommandButton">
+               <property name="text">
+                <string>Submit</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QPushButton" name="serverButton">
@@ -91,6 +116,9 @@
                 <height>110</height>
                </size>
               </property>
+              <property name="tabChangesFocus">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
             <item row="1" column="0">
@@ -114,6 +142,9 @@
                 <height>110</height>
                </size>
               </property>
+              <property name="tabChangesFocus">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
             <item row="2" column="0">
@@ -124,7 +155,11 @@
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QSpinBox" name="duration"/>
+             <widget class="QSpinBox" name="duration">
+              <property name="value">
+              <number>5</number>
+              </property>
+             </widget>
             </item>
             <item row="3" column="0" colspan="2">
              <widget class="QPushButton" name="startCountdown">

@@ -175,6 +175,7 @@ bool NetworkManager::StartServer(const int port)
     this->serverThread.detach();
 
     GHOST_LOG("Server started on " + this->serverIP.toString() + " (public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
+    GHOST_LOG("Enter 'help' for a list of commands.");
 
     return true;
 }

@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include "commands.h"
 #include "networkmanager.h"
 
 #include <qpushbutton.h>
@@ -14,6 +15,9 @@ MainWindow::MainWindow(QWidget* parent)
     ui.setupUi(this);
     this->isRunning = false;
     ui.resetButton->setVisible(false);
+    QFont font("Monospace");
+    font.setStyleHint(QFont::TypeWriter);
+    ui.textBrowser->setFont(font);
 
     network = new NetworkManager("ghost_log");
 
@@ -21,6 +25,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(ui.startCountdown, &QPushButton::clicked, this, &MainWindow::StartCountdown);
     connect(ui.resetButton, &QPushButton::clicked, this, &MainWindow::ResetServer);
+    connect(ui.submitCommandButton, &QPushButton::clicked, this, &MainWindow::SubmitCommand);
+    connect(ui.commandInput, &QLineEdit::returnPressed, this, &MainWindow::SubmitCommand);
 }
 
 MainWindow::~MainWindow()
@@ -85,4 +91,24 @@ void MainWindow::StartCountdown()
 
     int duration = ui.duration->value();
     this->network->StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
+}
+
+void MainWindow::SubmitCommand()
+{
+    QString command = ui.commandInput->text();
+
+    handle_cmd(this->network, command.toStdString().data());
+
+    if (g_current_cmd == CommandType::CMD_NONE) {
+        ui.commandInput->setStyleSheet("");
+    } else {
+        ui.commandInput->setStyleSheet("background-color: rgba(255, 255, 0, 64);");
+    }
+
+    if (g_should_stop) {
+        MainWindow::StopServer();
+        g_should_stop = 0;
+    }
+
+    ui.commandInput->clear();
 }

@@ -191,6 +191,7 @@
     <ClCompile Include="mainwindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="commands.cpp" />
     <ClCompile Include="networkmanager.cpp" />
     <ClCompile Include="main_cli.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)'!='DebugCLI' and '$(Configuration)'!='ReleaseCLI'">true</ExcludedFromBuild>
@@ -206,6 +207,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
     </QtMoc>
     <QtMoc Include="networkmanager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
+    </QtMoc>
+    <QtMoc Include="commands.h">
       <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
     </QtMoc>
   </ItemGroup>

@@ -1,5 +1,4 @@
-#ifndef NETWORKMANAGER_H
-#define NETWORKMANAGER_H
+#pragma once
 
 #include <SFML/Network.hpp>
 
@@ -89,8 +88,6 @@ class NetworkManager
 #endif
 
 private:
-    bool isRunning;
-
     unsigned short int serverPort;
     sf::IpAddress serverIP;
     sf::TcpListener listener;
@@ -112,6 +109,7 @@ public:
     sf::UdpSocket udpSocket;
     std::vector<Client> clients;
     std::vector<sf::IpAddress> bannedIps;
+    bool isRunning = false;
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
 
@@ -148,5 +146,3 @@ signals:
 
 
 };
-
-#endif // NETWORKMANAGER_H

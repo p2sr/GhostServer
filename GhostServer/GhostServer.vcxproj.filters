@@ -28,6 +28,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="networkmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,6 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="commands.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="networkmanager.h">

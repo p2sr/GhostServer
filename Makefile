@@ -8,10 +8,10 @@ ODIR=obj
 UIC=uic
 MOC=moc
 
-SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp
+SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp
 OBJS_GUI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/gui/%.o, $(SRCS_GUI))
 
-SRCS_CLI=$(SDIR)/main_cli.cpp $(SDIR)/networkmanager.cpp
+SRCS_CLI=$(SDIR)/main_cli.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp
 OBJS_CLI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/cli/%.o, $(SRCS_CLI))
 
 DEPS=$(OBJS_GUI:%.o=%.d)
