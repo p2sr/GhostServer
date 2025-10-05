@@ -11,8 +11,10 @@
 |countdown||start a countdown|
 |disconnect|name|disconnect a client by name|
 |disconnect_id|id|disconnect a client by ID|
+|disconnect_ip|ip|disconnect a client by IP address|
 |ban|name|ban connections from a certain IP by ghost name|
 |ban_id|id|ban connections from a certain IP by ghost ID|
+|ban_ip|ip|ban connections from a certain IP by IP address|
 |accept_players||start accepting connections from players|
 |refuse_players||stop accepting connections from players|
 |accept_spectators||start accepting connections from spectators|

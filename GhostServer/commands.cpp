@@ -43,6 +43,8 @@ std::string ssprintf(const char *fmt, ...) {
 # include <strings.h>
 #endif
 
+// TODO: Add unban, and save bans/whitelist to disk
+
 void handle_cmd(NetworkManager *network, char *line) {
     while (isspace(*line)) ++line;
 
@@ -83,8 +85,10 @@ void handle_cmd(NetworkManager *network, char *line) {
             LINE("  countdown             start a countdown");
             LINE("  disconnect            disconnect a client by name");
             LINE("  disconnect_id         disconnect a client by ID");
+            LINE("  disconnect_ip         disconnect a client by IP address");
             LINE("  ban                   ban connections from a certain IP by ghost name");
             LINE("  ban_id                ban connections from a certain IP by ghost ID");
+            LINE("  ban_ip                ban connections from a certain IP by IP address");
             LINE("  accept_players        start accepting connections from players");
             LINE("  refuse_players        stop accepting connections from players");
             LINE("  accept_spectators     start accepting connections from spectators");
@@ -151,6 +155,12 @@ void handle_cmd(NetworkManager *network, char *line) {
             return;
         }
 
+        if (!strcmp(line, "disconnect_ip")) {
+            g_current_cmd = CMD_DISCONNECT_IP;
+            LINE_NONL("IP of player to disconnect: ");
+            return;
+        }
+
         if (!strcmp(line, "ban")) {
             g_current_cmd = CMD_BAN;
             LINE_NONL("Name of player to ban: ");
@@ -160,6 +170,12 @@ void handle_cmd(NetworkManager *network, char *line) {
         if (!strcmp(line, "ban_id")) {
             g_current_cmd = CMD_BAN_ID;
             LINE_NONL("ID of player to ban: ");
+            return;
+        }
+
+        if (!strcmp(line, "ban_ip")) {
+            g_current_cmd = CMD_BAN_IP;
+            LINE_NONL("IP of player to ban: ");
             return;
         }
 
@@ -315,6 +331,24 @@ void handle_cmd(NetworkManager *network, char *line) {
             LINE("No player ID given; not disconnecting anyone.");
         }
         return;
+    
+    case CMD_DISCONNECT_IP:
+        g_current_cmd = CMD_NONE;
+        if (len != 0) {
+            sf::IpAddress ip(_line);
+            if (ip == sf::IpAddress::None) {
+                LINE("Invalid IP address: %s", line);
+                return;
+            }
+            network->ScheduleServerThread([=]() {
+                auto clients = network->GetClientByIP(ip);
+                for (auto cl : clients) network->DisconnectPlayer(*cl, "kicked");
+            });
+            LINE("Disconnected player IP %s", line);
+        } else {
+            LINE("No player IP given; not disconnecting anyone.");
+        }
+        return;
 
     case CMD_BAN:
         g_current_cmd = CMD_NONE;
@@ -340,6 +374,25 @@ void handle_cmd(NetworkManager *network, char *line) {
             LINE("Banned player ID %d", id);
         } else {
             LINE("No player ID given; not banning anyone.");
+        }
+        return;
+
+    case CMD_BAN_IP:
+        g_current_cmd = CMD_NONE;
+        if (len != 0) {
+            sf::IpAddress ip(_line);
+            if (ip == sf::IpAddress::None) {
+                LINE("Invalid IP address: %s", line);
+                return;
+            }
+            network->ScheduleServerThread([=]() {
+                auto clients = network->GetClientByIP(ip);
+                for (auto cl : clients) network->BanClientIP(*cl);
+            });
+            network->bannedIps.push_back(ip);
+            LINE("Banned player IP %s", line);
+        } else {
+            LINE("No player IP given; not banning anyone.");
         }
         return;
 
