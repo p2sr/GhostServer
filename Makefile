@@ -7,8 +7,9 @@ ODIR=obj
 # If this is the wrong version, try /usr/lib/qt6/uic
 UIC=uic
 MOC=moc
+RCC=rcc
 
-SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp
+SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp $(SDIR)/GhostServer_qrc.cpp
 OBJS_GUI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/gui/%.o, $(SRCS_GUI))
 
 SRCS_CLI=$(SDIR)/main_cli.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp
@@ -29,7 +30,7 @@ LDFLAGS_CLI=
 all: ghost_server ghost_server_cli
 clean:
 	rm -rf $(ODIR) ghost_server ghost_server_cli
-	rm -rf $(SDIR)/ui_mainwindow.h $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp
+	rm -rf $(SDIR)/ui_mainwindow.h $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp $(SDIR)/GhostServer_qrc.cpp
 
 -include $(DEPS)
 
@@ -52,3 +53,6 @@ $(SDIR)/ui_mainwindow.h: $(SDIR)/mainwindow.ui
 
 $(SDIR)/%_qt.cpp: $(SDIR)/%.h
 	cd $(SDIR); $(MOC) $(notdir $<) -o $(notdir $@) -DGHOST_GUI
+
+$(SDIR)/GhostServer_qrc.cpp: $(SDIR)/GhostServer.qrc
+	$(RCC) $< -o $@

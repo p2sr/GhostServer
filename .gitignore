@@ -15,6 +15,7 @@ GhostServer/Release/
 .vs/GhostServer/v16/.suo
 GhostServer/ui_mainwindow.h
 GhostServer/*_qt.cpp
+GhostServer/*_qrc.cpp
 config.mk
 copy.bat
 ghost_server

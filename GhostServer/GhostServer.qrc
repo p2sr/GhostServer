@@ -1,4 +1,6 @@
-<RCC>
+<!DOCTYPE RCC>
+<RCC version="1.0">
     <qresource prefix="GhostServer">
+        <file>icon.ico</file>
     </qresource>
 </RCC>
