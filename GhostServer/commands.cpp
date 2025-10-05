@@ -30,10 +30,10 @@ std::string ssprintf(const char *fmt, ...) {
 }
 
 #ifdef GHOST_GUI
-# define LINE(x, ...) emit network->OnNewEvent(QString::fromStdString(ssprintf(x, __VA_ARGS__)))
-# define LINE_NONL(x) network->OnNewEvent(QString::fromStdString(ssprintf(x)))
+# define LINE(x, ...) emit network->OnNewEvent(QString::fromStdString(ssprintf(x, ##__VA_ARGS__)))
+# define LINE_NONL(x) emit network->OnNewEvent(QString::fromStdString(ssprintf(x)))
 #else
-# define LINE(x, ...) printf(x "\n", __VA_ARGS__)
+# define LINE(x, ...) printf(x "\n", ##__VA_ARGS__)
 # define LINE_NONL(x) (fputs(x, stdout), fflush(stdout))
 #endif
 

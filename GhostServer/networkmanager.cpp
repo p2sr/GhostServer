@@ -193,6 +193,8 @@ void NetworkManager::StopServer()
 
     this->isRunning = false;
     this->clients.clear();
+    this->udpSocket.unbind();
+    this->listener.close();
 
     GHOST_LOG("Server stopped!");
 }
