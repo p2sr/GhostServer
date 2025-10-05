@@ -33,6 +33,12 @@ static void file_log(std::string str) {
 #define UPDATE_RATE 50
 #define CONNECT_TIMEOUT 1500
 
+#ifdef _WIN32
+# define strcasecmp _stricmp
+#else
+#	include <strings.h>
+#endif
+
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
 static std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
@@ -258,10 +264,13 @@ void NetworkManager::CheckConnection()
     client.tcpSocket = std::make_unique<sf::TcpSocket>();
 
     if (this->listener.accept(*client.tcpSocket) != sf::Socket::Done) {
+        GHOST_LOG("Failed to accept connection");
         return;
     }
-
-    if (this->ShouldBlockConnection(client.tcpSocket->getRemoteAddress())) {
+    client.IP = client.tcpSocket->getRemoteAddress();
+    
+    if (this->ShouldBlockConnection(client.IP)) {
+        GHOST_LOG("Refused connection from " + client.IP.toString() + " - banned or IP already connected");
         return;
     }
 
@@ -269,6 +278,7 @@ void NetworkManager::CheckConnection()
     sf::SocketSelector conn_selector;
     conn_selector.add(*client.tcpSocket);
     if (!conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT))) {
+        GHOST_LOG("Connection timeout from " + client.IP.toString());
         return;
     }
 
@@ -287,14 +297,13 @@ void NetworkManager::CheckConnection()
     connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col >> spectator;
 
     if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
-        // Refuse connection, since we're not currently accepting this type
+        GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not accepting this type");
         return;
     }
 
     if (whitelistEnabled) {
-        auto clientIp = client.tcpSocket->getRemoteAddress();
-        if (!IsOnWhitelist(name, clientIp)) {
-            // Refuse connection, since the player was not found in the whitelist
+        if (!IsOnWhitelist(name, client.IP)) {
+            GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not on whitelist");
             return;
         }
     }
@@ -571,13 +580,12 @@ void NetworkManager::DoHeartbeats()
 }
 
 bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
-    if (whitelist.empty())
-        return false;
+    if (whitelist.empty()) return false;
 
     auto index = std::find_if(whitelist.begin(), whitelist.end(), [&name, &IP](const WhitelistEntry& entry) {
         switch (entry.type) {
         case WhitelistEntryType::NAME:
-            return entry.value == name;
+            return strcasecmp(entry.value.c_str(), name.c_str()) == 0;
         case WhitelistEntryType::IP:
             return entry.value == IP.toString();
         default:

@@ -37,6 +37,12 @@ std::string ssprintf(const char *fmt, ...) {
 # define LINE_NONL(x) (fputs(x, stdout), fflush(stdout))
 #endif
 
+#ifdef _WIN32
+# define strcasecmp _stricmp
+#else
+# include <strings.h>
+#endif
+
 void handle_cmd(NetworkManager *network, char *line) {
     while (isspace(*line)) ++line;
 
@@ -56,6 +62,8 @@ void handle_cmd(NetworkManager *network, char *line) {
         g_current_cmd = CMD_NONE;
         return;
     }
+
+    std::string _line(line);
 
     switch (g_current_cmd) {
     case CMD_NONE:
@@ -284,9 +292,8 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_DISCONNECT:
         g_current_cmd = CMD_NONE;
         if (len != 0) {
-            std::string l1(line);
             network->ScheduleServerThread([=]() {
-                auto players = network->GetPlayerByName(l1);
+                auto players = network->GetPlayerByName(_line);
                 for (auto cl : players) network->DisconnectPlayer(*cl, "kicked");
             });
             LINE("Disconnected player '%s'", line);
@@ -312,9 +319,8 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_BAN:
         g_current_cmd = CMD_NONE;
         if (len != 0) {
-            std::string l1(line);
             network->ScheduleServerThread([=]() {
-                auto players = network->GetPlayerByName(l1);
+                auto players = network->GetPlayerByName(_line);
                 for (auto cl : players) network->BanClientIP(*cl);
             });
             LINE("Banned player '%s'", line);
@@ -346,8 +352,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         g_current_cmd = CMD_NONE;
         network->ScheduleServerThread([=] {
             network->whitelistEnabled = true; 
-
-            if (!strcmp(line, "y")) {
+            if (!strcmp(_line.c_str(), "y")) {
                 for (auto& client : network->clients) {
                     if (!network->IsOnWhitelist(client.name, client.IP)) {
                         network->DisconnectPlayer(client, "not on whitelist");
@@ -362,7 +367,7 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_WHITELIST_ADD_NAME:
         g_current_cmd = CMD_NONE;
         network->ScheduleServerThread([=] {
-            network->whitelist.insert({ WhitelistEntryType::NAME, line });
+            network->whitelist.insert({ WhitelistEntryType::NAME, _line });
         });
         LINE("Added player %s to whitelist", line);
         return;
@@ -370,7 +375,7 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_WHITELIST_ADD_IP:
         g_current_cmd = CMD_NONE;
         network->ScheduleServerThread([=] {
-            network->whitelist.insert({ WhitelistEntryType::IP, line });
+            network->whitelist.insert({ WhitelistEntryType::IP, _line });
         });
         LINE("Added player IP %s to whitelist", line);
         return;
@@ -378,10 +383,8 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_WHITELIST_REMOVE_NAME: {
         g_current_cmd = CMD_NONE;
 
-        std::string _line(line);
-
         auto index = std::find_if(network->whitelist.begin(), network->whitelist.end(), [&](const WhitelistEntry& entry) {
-            return entry.type == WhitelistEntryType::NAME && entry.value == _line;
+            return entry.type == WhitelistEntryType::NAME && strcasecmp(entry.value.c_str(), _line.c_str()) == 0;
         });
 
         if (index != network->whitelist.end()) {
@@ -403,17 +406,21 @@ void handle_cmd(NetworkManager *network, char *line) {
     case CMD_WHITELIST_REMOVE_IP: {
         g_current_cmd = CMD_NONE;
 
-        std::string _line(line);
+        sf::IpAddress ip(_line);
+        if (ip == sf::IpAddress::None) {
+            LINE("Invalid IP address: %s", line);
+            return;
+        }
 
         auto index = std::find_if(network->whitelist.begin(), network->whitelist.end(), [&](const WhitelistEntry& entry) {
-            return entry.type == WhitelistEntryType::IP && entry.value == _line;
+            return entry.type == WhitelistEntryType::IP && entry.value == ip.toString();
         });
 
         if (index != network->whitelist.end()) {
             network->ScheduleServerThread([=]() {
                 network->whitelist.erase(index);
 
-                auto clients = network->GetClientByIP(_line);
+                auto clients = network->GetClientByIP(ip);
                 for (auto client : clients) {
                     network->DisconnectPlayer(*client, "not on whitelist");
                 }
