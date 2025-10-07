@@ -6,6 +6,12 @@
 #include "ui_mainwindow.h"
 #include "networkmanager.h"
 
+struct CountdownPreset {
+    QString name;
+    QString preCommands;
+    QString postCommands;
+};
+
 class MainWindow : public QWidget
 {
 	Q_OBJECT

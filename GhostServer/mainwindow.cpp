@@ -9,11 +9,6 @@
 
 #include <qdebug.h>
 
-struct CountdownPreset {
-    QString name;
-    QString preCommands;
-    QString postCommands;
-};
 std::vector<CountdownPreset> countdownPresets = {
     {
         "None",
@@ -23,17 +18,17 @@ std::vector<CountdownPreset> countdownPresets = {
     {
         "Fullgame",
         "ghost_sync 1\nghost_sync_countdown 3\nsvar_set sp_use_save 2\nghost_leaderboard_mode 1\nghost_leaderboard_reset\nsar_on_load conds map=sp_a1_wakeup \"ghost_sync 0\" map=sp_a2_intro \"ghost_sync 1\"",
-        "sar_speedrun_skip_cutscenes 1; sar_speedrun_offset 18980; sar_speedrun_reset; stop; sv_allow_mobile_portals 0; load vault"
+        "sar_speedrun_skip_cutscenes 1\nsar_speedrun_offset 18980\nsar_speedrun_reset\nstop\nsv_allow_mobile_portals 0\nload vault"
     },
     {
         "Speedrun Mod",
         "ghost_sync 1\nghost_sync_countdown 3\nsvar_set sp_use_save 2\nghost_leaderboard_mode 1\nghost_leaderboard_reset",
-        "sar_speedrun_offset 0; sar_speedrun_reset; stop; sv_allow_mobile_portals 0; map sp_a1_intro1"
+        "sar_speedrun_offset 0\nsar_speedrun_reset\nstop\nsv_allow_mobile_portals 0\nmap sp_a1_intro1"
     },
     {
         "Portal Stories: Mel",
         "ghost_sync 1\nghost_sync_countdown 3\nghost_leaderboard_mode 1\nghost_leaderboard_reset\nsar_ent_slot_serial 838 16301",
-        "sar_speedrun_reset; map st_a1_tramride"
+        "sar_speedrun_reset\nmap st_a1_tramride"
     }
 };
 
