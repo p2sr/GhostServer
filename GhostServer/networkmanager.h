@@ -34,6 +34,9 @@ enum class HEADER {
     SPEEDRUN_FINISH,
     MODEL_CHANGE,
     COLOR_CHANGE,
+    TAUNT,
+    LOCATOR,
+    VOICE,
 };
 
 struct DataGhost {

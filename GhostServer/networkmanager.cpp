@@ -460,6 +460,18 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
         client->data = data;
         break;
     }
+    case HEADER::TAUNT: {
+        SEND_TO_OTHERS(packet);
+        break;
+    }
+    case HEADER::LOCATOR: {
+        SEND_TO_OTHERS(packet);
+        break;
+    }
+    case HEADER::VOICE: {
+        SEND_TO_OTHERS(packet);
+        break;
+    }
     default:
         break;
     }
