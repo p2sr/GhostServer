@@ -8,12 +8,18 @@
 #include <cstdlib>
 #include <algorithm>
 
-volatile int g_should_stop = 0;
-CommandType g_current_cmd = CMD_NONE;
+#ifdef _WIN32
+# include <Windows.h>
+# define strdup _strdup
+# define strcasecmp _stricmp
+#else
+# include <strings.h>
+#endif
 
-static char *g_entered_pre;
-static char *g_entered_post;
-static int g_countdown_duration = -1;
+volatile int g_should_stop = 0;
+
+static char *g_entered_pre = strdup("");
+static char *g_entered_post = strdup("");
 
 std::string ssprintf(const char *fmt, ...) {
 	va_list ap1, ap2;
@@ -37,451 +43,438 @@ std::string ssprintf(const char *fmt, ...) {
 # define LINE_NONL(x) (fputs(x, stdout), fflush(stdout))
 #endif
 
-#ifdef _WIN32
-# define strcasecmp _stricmp
-#else
-# include <strings.h>
-#endif
 
 // TODO: Add unban, and save bans/whitelist to disk
 
 void handle_cmd(NetworkManager *network, char *line) {
-    while (isspace(*line)) ++line;
+    std::string _line(line);
+    std::vector<std::string> args;
+    std::vector<std::string> argsL; // lower
+    std::vector<std::string> argsR; // remaining
+    for (size_t i = 0; i < _line.size(); ) {
+        while (i < _line.size() && isspace(_line[i])) ++i;
+        if (i >= _line.size()) break;
 
-    size_t len = strlen(line);
-
-    while (len > 0 && isspace(line[len-1])) {
-        line[len-1] = 0;
-        len -= 1;
+        size_t start = i;
+        if (_line[i] == '"') {
+            ++i;
+            start = i;
+            while (i < _line.size() && _line[i] != '"') ++i;
+        } else {
+            while (i < _line.size() && !isspace(_line[i])) ++i;
+        }
+        std::string arg = _line.substr(start, i - start);
+        args.push_back(arg);
+        for (auto &c : arg) c = tolower(c);
+        argsL.push_back(arg);
+        if (i < _line.size() && _line[i] == '"') ++i;
+        while (i < _line.size() && isspace(_line[i])) ++i;
+        argsR.push_back(_line.substr(i));
     }
 
 #ifdef GHOST_GUI
     LINE("] %s", line);
 #endif
 
-    if (!network->isRunning) {
-        LINE("Start the server first.");
-        g_current_cmd = CMD_NONE;
+    if (args.empty()) return;
+
+    if (false) { // debug
+        LINE("%d args:", (int)args.size());
+        for (size_t i = 0; i < args.size(); ++i) {
+            LINE("%d: '%s' '%s' '%s'", (int)i, args[i].c_str(), argsL[i].c_str(), argsR[i].c_str());
+        }
+    }
+
+    std::string cmd = argsL[0];
+    if (cmd == "help") {
+        LINE("Available commands:");
+        LINE("  help                  show this list");
+        LINE("  start                 start the server");
+        LINE("  stop                  terminate the server");
+        LINE("  list                  list all the currently connected clients");
+        LINE("  countdown             start/modify a countdown");
+        LINE("  kick                  kick a client");
+        LINE("  ban                   ban a client");
+        LINE("  accept                start accepting connections");
+        LINE("  refuse                stop accepting connections");
+        LINE("  say                   send a message to all clients");
+        LINE("  whitelist             manage the whitelist");
         return;
     }
 
-    std::string _line(line);
-
-    switch (g_current_cmd) {
-    case CMD_NONE:
-        if (len == 0) return;
-
-        if (!strcmp(line, "quit")) {
-            g_should_stop = 1;
+    if (cmd == "start") {
+        if (network->isRunning) {
+            LINE("Server is already running.");
             return;
         }
-
-        if (!strcmp(line, "help")) {
-            LINE("Available commands:");
-            LINE("  help                  show this list");
-            LINE("  quit                  terminate the server");
-            LINE("  list                  list all the currently connected clients");
-            LINE("  countdown_set         set the pre/post cmds and countdown duration");
-            LINE("  countdown             start a countdown");
-            LINE("  disconnect            disconnect a client by name");
-            LINE("  disconnect_id         disconnect a client by ID");
-            LINE("  disconnect_ip         disconnect a client by IP address");
-            LINE("  ban                   ban connections from a certain IP by ghost name");
-            LINE("  ban_id                ban connections from a certain IP by ghost ID");
-            LINE("  ban_ip                ban connections from a certain IP by IP address");
-            LINE("  accept_players        start accepting connections from players");
-            LINE("  refuse_players        stop accepting connections from players");
-            LINE("  accept_spectators     start accepting connections from spectators");
-            LINE("  refuse_spectators     stop accepting connections from spectators");
-            LINE("  server_msg            send all clients a message from the server");
-            LINE("  whitelist_enable      enable whitelist");
-            LINE("  whitelist_disable     disable whitelist");
-            LINE("  whitelist_add_name    add player to whitelist");
-            LINE("  whitelist_add_ip      add player to whitelist");
-            LINE("  whitelist_remove_name remove player from whitelist");
-            LINE("  whitelist_remove_ip   remove player from whitelist");
-            LINE("  whitelist             print out all entries on whitelist");
+        int port = 53000;
+        if (args.size() >= 2) {
+            port = atoi(args[1].c_str());
+            if (port < 1 || port > 65535) {
+                LINE("Invalid port %d", port);
+                return;
+            }
+        }
+        if (!network->StartServer(port)) {
+            LINE("Failed to start server on port %d", port);
             return;
         }
+        LINE("Server started on port %d", port);
+        return;
+    }
 
-        if (!strcmp(line, "list")) {
-            network->ScheduleServerThread([=]() {
-                if (network->clients.empty()) {
-                    LINE("No clients");
-                } else {
-                    LINE("Clients:");
-                    for (auto &cl : network->clients) {
-                        LINE("  %-3d %s @ %s:%d", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
-                    }
+    if (cmd == "stop") {
+        if (!network->isRunning) {
+            LINE("Server is not running.");
+            return;
+        }
+        g_should_stop = 1;
+        return;
+    }
+
+    if (!network->isRunning) {
+        LINE("Server is not running. Use 'start' to start the server.");
+        return;
+    }
+
+    if (cmd == "list") {
+        network->ScheduleServerThread([=]() {
+            if (network->clients.empty()) {
+                LINE("No clients");
+            } else {
+                LINE("Clients:");
+                for (auto &cl : network->clients) {
+                    LINE("  %-3d %s @ %s:%d", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
                 }
-            });
+            }
+        });
+        return;
+    }
+
+    if (cmd == "countdown") {
+        if (args.size() < 2) {
+            LINE("Usage: countdown <pre|post|start> [pre-cmds|post-cmds|duration]");
             return;
         }
-
-        if (!strcmp(line, "countdown")) {
-            if (g_countdown_duration == -1) {
-                LINE("Set a countdown first using countdown_set.");
+        std::string subcmd = argsL[1];
+        if (subcmd == "pre") {
+            if (args.size() < 3) {
+                LINE("Usage: countdown pre <pre-cmds>");
+                return;
+            }
+            std::string pre_cmds = argsR[1];
+            g_entered_pre = strdup(pre_cmds.c_str());
+        } else if (subcmd == "post") {
+            if (args.size() < 3) {
+                LINE("Usage: countdown post <post-cmds>");
+                return;
+            }
+            std::string post_cmds = argsR[1];
+            g_entered_post = strdup(post_cmds.c_str());
+        } else if (subcmd == "start") {
+            if (args.size() != 3) {
+                LINE("Usage: countdown start <duration>");
+                return;
+            }
+            int duration = atoi(args[2].c_str());
+            if (duration <= 0) {
+                LINE("Duration must be positive");
+                return;
+            } else if (duration > 60) {
+                LINE("Duration too long (max 60)");
                 return;
             }
             network->ScheduleServerThread([=]() {
-                network->StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), g_countdown_duration);
+                network->StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), duration);
             });
-            LINE("Started countdown with:");
-            LINE("  pre-cmd '%s'", g_entered_pre);
-            LINE("  post-cmd '%s'", g_entered_post);
-            LINE("  duration %d", g_countdown_duration);
+        } else {
+            LINE("Usage: countdown <pre|post|start> [pre-cmds|post-cmds|duration]");
+        }
+        return;
+    }
+
+    if (cmd == "kick") {
+        if (args.size() != 3) {
+            LINE("Usage: kick <name|id|ip> <value>");
             return;
         }
+        std::string subcmd = argsL[1];
+        if (subcmd == "name") {
+            std::string name = args[2];
+            network->ScheduleServerThread([=]() {
+                auto players = network->GetPlayerByName(name);
+                if (players.empty()) {
+                    LINE("No player named '%s'", name.c_str());
+                } else {
+                    for (auto &p : players) {
+                        network->DisconnectPlayer(*p, "kicked");
+                    }
+                }
+            });
+        } else if (subcmd == "id") {
+            int id = atoi(args[2].c_str());
+            network->ScheduleServerThread([=]() {
+                auto p = network->GetClientByID(id);
+                if (!p) {
+                    LINE("No player with ID %d", id);
+                } else {
+                    network->DisconnectPlayer(*p, "kicked");
+                }
+            });
+        } else if (subcmd == "ip") {
+            sf::IpAddress ip(args[2]);
+            if (ip == sf::IpAddress::None) {
+                LINE("Invalid IP address");
+                return;
+            }
+            network->ScheduleServerThread([=]() {
+                auto players = network->GetClientByIP(ip);
+                if (players.empty()) {
+                    LINE("No player with IP %s", ip.toString().c_str());
+                } else {
+                    for (auto &p : players) {
+                        network->DisconnectPlayer(*p, "kicked");
+                    }
+                }
+            });
+        } else {
+            LINE("Usage: kick <name|id|ip> <value>");
+        }
+        return;
+    }
 
-        if (!strcmp(line, "countdown_set")) {
-            g_current_cmd = CMD_COUNTDOWN_SET;
-            if (g_entered_pre) free(g_entered_pre);
-            if (g_entered_post) free(g_entered_post);
-            g_entered_pre = g_entered_post = NULL;
-            g_countdown_duration = -1;
-            LINE_NONL("Pre-countdown command: ");
+    if (cmd == "ban") {
+        if (args.size() < 2 || args.size() > 3) {
+            LINE("Usage: ban <name|id|ip|list> <value>");
             return;
         }
+        std::string subcmd = argsL[1];
+        if (subcmd == "name") {
+            if (args.size() != 3) {
+                LINE("Usage: ban name <value>");
+                return;
+            }
+            std::string name = args[2];
+            network->ScheduleServerThread([=]() {
+                auto players = network->GetPlayerByName(name);
+                if (players.empty()) {
+                    LINE("No player named '%s'", name.c_str());
+                } else {
+                    for (auto p : players) {
+                        network->BanClientIP(p->IP);
+                    }
+                }
+            });
+        } else if (subcmd == "id") {
+            if (args.size() != 3) {
+                LINE("Usage: ban id <value>");
+                return;
+            }
+            int id = atoi(args[2].c_str());
+            network->ScheduleServerThread([=]() {
+                auto p = network->GetClientByID(id);
+                if (!p) {
+                    LINE("No player with ID %d", id);
+                } else {
+                    network->BanClientIP(p->IP);
+                }
+            });
+        } else if (subcmd == "ip") {
+            if (args.size() != 3) {
+                LINE("Usage: ban ip <value>");
+                return;
+            }
+            sf::IpAddress ip(args[2]);
+            if (ip == sf::IpAddress::None) {
+                LINE("Invalid IP address");
+                return;
+            }
+            network->ScheduleServerThread([=]() {
+                network->BanClientIP(ip);
+            });
+        } else if (subcmd == "list") {
+            network->ScheduleServerThread([=]() {
+                if (network->bannedIps.empty()) {
+                    LINE("No banned IPs");
+                } else {
+                    LINE("Banned IPs:");
+                    for (auto &ip : network->bannedIps) {
+                        LINE("  %s", ip.toString().c_str());
+                    }
+                }
+            });
+        } else {
+            LINE("Usage: ban <name|id|ip|list> <value>");
+        }
+        return;
+    }
 
-        if (!strcmp(line, "disconnect")) {
-            g_current_cmd = CMD_DISCONNECT;
-            LINE_NONL("Name of player to disconnect: ");
+    if (cmd == "accept") {
+        if (args.size() != 2) {
+            LINE("Usage: accept <players|spectators|all>");
             return;
         }
-
-        if (!strcmp(line, "disconnect_id")) {
-            g_current_cmd = CMD_DISCONNECT_ID;
-            LINE_NONL("ID of player to disconnect: ");
-            return;
-        }
-
-        if (!strcmp(line, "disconnect_ip")) {
-            g_current_cmd = CMD_DISCONNECT_IP;
-            LINE_NONL("IP of player to disconnect: ");
-            return;
-        }
-
-        if (!strcmp(line, "ban")) {
-            g_current_cmd = CMD_BAN;
-            LINE_NONL("Name of player to ban: ");
-            return;
-        }
-
-        if (!strcmp(line, "ban_id")) {
-            g_current_cmd = CMD_BAN_ID;
-            LINE_NONL("ID of player to ban: ");
-            return;
-        }
-
-        if (!strcmp(line, "ban_ip")) {
-            g_current_cmd = CMD_BAN_IP;
-            LINE_NONL("IP of player to ban: ");
-            return;
-        }
-
-        if (!strcmp(line, "accept_players")) {
+        std::string subcmd = argsL[1];
+        if (subcmd == "players") {
             network->ScheduleServerThread([=]() {
                 network->acceptingPlayers = true;
             });
             LINE("Now accepting connections from players");
-            return;
-        }
-
-        if (!strcmp(line, "refuse_players")) {
-            network->ScheduleServerThread([=]() {
-                network->acceptingPlayers = false;
-            });
-            LINE("Now refusing connections from players");
-            return;
-        }
-
-        if (!strcmp(line, "accept_spectators")) {
+        } else if (subcmd == "spectators") {
             network->ScheduleServerThread([=]() {
                 network->acceptingSpectators = true;
             });
             LINE("Now accepting connections from spectators");
+        } else if (subcmd == "all") {
+            network->ScheduleServerThread([=]() {
+                network->acceptingPlayers = true;
+                network->acceptingSpectators = true;
+            });
+            LINE("Now accepting connections from players and spectators");
+        } else {
+            LINE("Usage: accept <players|spectators|all>");
+        }
+        return;
+    }
+
+    if (cmd == "refuse") {
+        if (args.size() != 2) {
+            LINE("Usage: refuse <players|spectators|all>");
             return;
         }
-
-        if (!strcmp(line, "refuse_spectators")) {
+        std::string subcmd = argsL[1];
+        if (subcmd == "players") {
+            network->ScheduleServerThread([=]() {
+                network->acceptingPlayers = false;
+            });
+            LINE("Now refusing connections from players");
+        } else if (subcmd == "spectators") {
             network->ScheduleServerThread([=]() {
                 network->acceptingSpectators = false;
             });
             LINE("Now refusing connections from spectators");
+        } else if (subcmd == "all") {
+            network->ScheduleServerThread([=]() {
+                network->acceptingPlayers = false;
+                network->acceptingSpectators = false;
+            });
+            LINE("Now refusing connections from players and spectators");
+        } else {
+            LINE("Usage: refuse <players|spectators|all>");
+        }
+        return;
+    }
+
+    if (cmd == "say") {
+        if (args.size() < 2) {
+            LINE("Usage: say <message>");
             return;
         }
+        std::string message = argsR[0];
+        network->ScheduleServerThread([=]() {
+            network->ServerMessage(message.c_str());
+        });
+        return;
+    }
 
-        if (!strcmp(line, "server_msg")) {
-            g_current_cmd = CMD_SERVER_MSG;
-            LINE_NONL("Message to send: ");
+    if (cmd == "whitelist") {
+        if (args.size() < 2 || args.size() > 4) {
+            LINE("Usage: whitelist <on|off|kick|add|remove|list> [name|ip] [value]");
+            if (args.size() == 1) {
+                LINE("Whitelist is currently %s", network->whitelistEnabled ? "on" : "off");
+            }
             return;
         }
-
-        if (!strcmp(line, "whitelist_enable")) {
-            g_current_cmd = CMD_WHITELIST_ENABLE;
-            LINE_NONL("Disconnect players not on whitelist? (y/N) ");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist_disable")) {
+        std::string subcmd = argsL[1];
+        if (subcmd == "on") {
+            network->ScheduleServerThread([=]() {
+                network->whitelistEnabled = true;
+            });
+            LINE("Whitelist now enabled");
+        } else if (subcmd == "off") {
             network->ScheduleServerThread([=]() {
                 network->whitelistEnabled = false;
             });
             LINE("Whitelist now disabled");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist_add_name")) {
-            g_current_cmd = CMD_WHITELIST_ADD_NAME;
-            LINE_NONL("Player to add: ");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist_add_ip")) {
-            g_current_cmd = CMD_WHITELIST_ADD_IP;
-            LINE_NONL("Player IP to add: ");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist_remove_name")) {
-            g_current_cmd = CMD_WHITELIST_REMOVE_NAME;
-            LINE_NONL("Player to remove: ");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist_remove_ip")) {
-            g_current_cmd = CMD_WHITELIST_REMOVE_IP;
-            LINE_NONL("Player IP to remove: ");
-            return;
-        }
-
-        if (!strcmp(line, "whitelist")) {
-            if (network->whitelist.size() == 0) {
-                LINE("No players on whitelist");
-            } else {
-                LINE("Players on whitelist:");
-                for (auto& entry : network->whitelist) {
-                    LINE("  %s", entry.value.c_str());
+        } else if (subcmd == "kick") {
+            for (auto &cl : network->clients) {
+                if (!network->IsOnWhitelist(cl.name, cl.IP)) {
+                    network->DisconnectPlayer(cl, "not on whitelist");
                 }
             }
-
-            if (network->whitelistEnabled)
-                LINE("(Whitelist enabled)");
-            else
-                LINE("(Whitelist disabled)");
-            return;
-        }
-        
-        LINE("Unknown command: '%s'", line);
-        LINE("Enter 'help' for a list of commands.");
-        return;
-
-    case CMD_COUNTDOWN_SET:
-        if (!g_entered_pre) {
-            g_entered_pre = strdup(line);
-            LINE_NONL("Post-countdown command: ");
-            return;
-        }
-
-        if (!g_entered_post) {
-            g_entered_post = strdup(line);
-            LINE_NONL("Countdown duration: ");
-            return;
-        }
-
-        g_countdown_duration = atoi(line);
-        if (g_countdown_duration < 0 || g_countdown_duration > 60) {
-            LINE("Bad countdown duration; not setting countdown.");
-            if (g_entered_pre) free(g_entered_pre);
-            if (g_entered_post) free(g_entered_post);
-            g_entered_pre = g_entered_post = NULL;
-            g_countdown_duration = -1;
-            g_current_cmd = CMD_NONE;
-            return;
-        }
-
-        LINE("Initialized countdown");
-        g_current_cmd = CMD_NONE;
-
-        return;
-
-    case CMD_DISCONNECT:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            network->ScheduleServerThread([=]() {
-                auto players = network->GetPlayerByName(_line);
-                for (auto cl : players) network->DisconnectPlayer(*cl, "kicked");
-            });
-            LINE("Disconnected player '%s'", line);
-        } else {
-            LINE("No player name given; not disconnecting anyone.");
-        }
-        return;
-
-    case CMD_DISCONNECT_ID:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            int id = atoi(line);
-            network->ScheduleServerThread([=]() {
-                auto cl = network->GetClientByID(id);
-                if (cl) network->DisconnectPlayer(*cl, "kicked");
-            });
-            LINE("Disconnected player ID %d", id);
-        } else {
-            LINE("No player ID given; not disconnecting anyone.");
-        }
-        return;
-    
-    case CMD_DISCONNECT_IP:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            sf::IpAddress ip(_line);
-            if (ip == sf::IpAddress::None) {
-                LINE("Invalid IP address: %s", line);
+            LINE("Kicked all non-whitelisted clients");
+        } else if (subcmd == "add") {
+            if (args.size() != 4) {
+                LINE("Usage: whitelist add <name|ip> <value>");
                 return;
             }
-            network->ScheduleServerThread([=]() {
-                auto clients = network->GetClientByIP(ip);
-                for (auto cl : clients) network->DisconnectPlayer(*cl, "kicked");
-            });
-            LINE("Disconnected player IP %s", line);
-        } else {
-            LINE("No player IP given; not disconnecting anyone.");
-        }
-        return;
-
-    case CMD_BAN:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            network->ScheduleServerThread([=]() {
-                auto players = network->GetPlayerByName(_line);
-                for (auto cl : players) network->BanClientIP(*cl);
-            });
-            LINE("Banned player '%s'", line);
-        } else {
-            LINE("No player name given; not banning anyone.");
-        }
-        return;
-
-    case CMD_BAN_ID:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            int id = atoi(line);
-            network->ScheduleServerThread([=]() {
-                auto cl = network->GetClientByID(id);
-                if (cl) network->BanClientIP(*cl);
-            });
-            LINE("Banned player ID %d", id);
-        } else {
-            LINE("No player ID given; not banning anyone.");
-        }
-        return;
-
-    case CMD_BAN_IP:
-        g_current_cmd = CMD_NONE;
-        if (len != 0) {
-            sf::IpAddress ip(_line);
-            if (ip == sf::IpAddress::None) {
-                LINE("Invalid IP address: %s", line);
+            std::string type = argsL[2];
+            std::string value = args[3];
+            if (type == "name") {
+                network->ScheduleServerThread([=]() {
+                    network->whitelist.insert(WhitelistEntry{WhitelistEntryType::NAME, value});
+                });
+                LINE("Added name '%s' to whitelist", value.c_str());
+            } else if (type == "ip") {
+                sf::IpAddress ip(value);
+                if (ip == sf::IpAddress::None) {
+                    LINE("Invalid IP address");
+                    return;
+                }
+                network->ScheduleServerThread([=]() {
+                    network->whitelist.insert(WhitelistEntry{WhitelistEntryType::IP, ip.toString()});
+                });
+                LINE("Added IP '%s' to whitelist", ip.toString().c_str());
+            } else {
+                LINE("Usage: whitelist add <name|ip> <value>");
+            }
+        } else if (subcmd == "remove") {
+            if (args.size() != 4) {
+                LINE("Usage: whitelist remove <name|ip> <value>");
                 return;
             }
+            std::string type = argsL[2];
+            std::string value = args[3];
+            if (type == "name") {
+                network->ScheduleServerThread([=]() {
+                    network->whitelist.erase(WhitelistEntry{WhitelistEntryType::NAME, value});
+                });
+                LINE("Removed name '%s' from whitelist", value.c_str());
+            } else if (type == "ip") {
+                sf::IpAddress ip(value);
+                if (ip == sf::IpAddress::None) {
+                    LINE("Invalid IP address");
+                    return;
+                }
+                network->ScheduleServerThread([=]() {
+                    network->whitelist.erase(WhitelistEntry{WhitelistEntryType::IP, ip.toString()});
+                });
+                LINE("Removed IP '%s' from whitelist", ip.toString().c_str());
+            } else {
+                LINE("Usage: whitelist remove <name|ip> <value>");
+            }
+        } else if (subcmd == "list") {
             network->ScheduleServerThread([=]() {
-                auto clients = network->GetClientByIP(ip);
-                for (auto cl : clients) network->BanClientIP(*cl);
-            });
-            network->bannedIps.push_back(ip);
-            LINE("Banned player IP %s", line);
-        } else {
-            LINE("No player IP given; not banning anyone.");
-        }
-        return;
-
-    case CMD_SERVER_MSG:
-        g_current_cmd = CMD_NONE;
-        network->ServerMessage(line);
-        return;
-
-    case CMD_WHITELIST_ENABLE:
-        g_current_cmd = CMD_NONE;
-        network->ScheduleServerThread([=] {
-            network->whitelistEnabled = true; 
-            if (!strcmp(_line.c_str(), "y")) {
-                for (auto& client : network->clients) {
-                    if (!network->IsOnWhitelist(client.name, client.IP)) {
-                        network->DisconnectPlayer(client, "not on whitelist");
+                if (network->whitelist.empty()) {
+                    LINE("Whitelist is empty");
+                } else {
+                    LINE("Whitelist entries:");
+                    for (auto &entry : network->whitelist) {
+                        if (entry.type == WhitelistEntryType::NAME) {
+                            LINE("  Name: %s", entry.value.c_str());
+                        } else if (entry.type == WhitelistEntryType::IP) {
+                            LINE("  IP:   %s", entry.value.c_str());
+                        }
                     }
                 }
-            }
-        });
-
-        LINE("Whitelist now enabled!");
-        return;
-
-    case CMD_WHITELIST_ADD_NAME:
-        g_current_cmd = CMD_NONE;
-        network->ScheduleServerThread([=] {
-            network->whitelist.insert({ WhitelistEntryType::NAME, _line });
-        });
-        LINE("Added player %s to whitelist", line);
-        return;
-
-    case CMD_WHITELIST_ADD_IP:
-        g_current_cmd = CMD_NONE;
-        network->ScheduleServerThread([=] {
-            network->whitelist.insert({ WhitelistEntryType::IP, _line });
-        });
-        LINE("Added player IP %s to whitelist", line);
-        return;
-
-    case CMD_WHITELIST_REMOVE_NAME: {
-        g_current_cmd = CMD_NONE;
-
-        auto index = std::find_if(network->whitelist.begin(), network->whitelist.end(), [&](const WhitelistEntry& entry) {
-            return entry.type == WhitelistEntryType::NAME && strcasecmp(entry.value.c_str(), _line.c_str()) == 0;
-        });
-
-        if (index != network->whitelist.end()) {
-            auto clients = network->GetPlayerByName(_line);
-
-            network->ScheduleServerThread([=]() {
-                network->whitelist.erase(index);
-
-                for (auto client : clients) {
-                    network->DisconnectPlayer(*client, "not on whitelist");
-                }
+                LINE("Whitelist is currently %s", network->whitelistEnabled ? "on" : "off");
             });
+        } else {
+            LINE("Usage: whitelist <on|off|add|remove|list> [name|ip] [value]");
         }
-
-        LINE("Removed player %s from whitelist", line);
         return;
     }
 
-    case CMD_WHITELIST_REMOVE_IP: {
-        g_current_cmd = CMD_NONE;
-
-        sf::IpAddress ip(_line);
-        if (ip == sf::IpAddress::None) {
-            LINE("Invalid IP address: %s", line);
-            return;
-        }
-
-        auto index = std::find_if(network->whitelist.begin(), network->whitelist.end(), [&](const WhitelistEntry& entry) {
-            return entry.type == WhitelistEntryType::IP && entry.value == ip.toString();
-        });
-
-        if (index != network->whitelist.end()) {
-            network->ScheduleServerThread([=]() {
-                network->whitelist.erase(index);
-
-                auto clients = network->GetClientByIP(ip);
-                for (auto client : clients) {
-                    network->DisconnectPlayer(*client, "not on whitelist");
-                }
-            });
-        }
-
-        LINE("Removed player IP %s from whitelist", line);
-        return;
-    }
-    }
+    LINE("Unknown command: '%s'", line);
+    LINE("Enter 'help' for a list of commands.");
 }

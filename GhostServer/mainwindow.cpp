@@ -99,12 +99,6 @@ void MainWindow::SubmitCommand()
 
     handle_cmd(this->network, command.toStdString().data());
 
-    if (g_current_cmd == CommandType::CMD_NONE) {
-        ui.commandInput->setStyleSheet("");
-    } else {
-        ui.commandInput->setStyleSheet("background-color: rgba(255, 255, 0, 64);");
-    }
-
     if (g_should_stop) {
         MainWindow::StopServer();
         g_should_stop = 0;

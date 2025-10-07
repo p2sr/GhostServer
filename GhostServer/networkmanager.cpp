@@ -242,7 +242,10 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
     for (auto& client : this->clients) {
         client.tcpSocket->send(packet);
     }
-    this->acceptingPlayers = false;
+    if (true) { // TODO: Make this a setting?
+        this->acceptingPlayers = false;
+        GHOST_LOG("Now refusing connections from players");
+    }
 }
 
 bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
@@ -251,8 +254,8 @@ bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
         return true;
     }
 
-    for (auto banned : this->bannedIps) {
-        if (ip == banned) return true;
+    if (this->bannedIps.find(ip) != this->bannedIps.end()) {
+        return true;
     }
 
     return false;
@@ -462,9 +465,14 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     }
 }
 
-void NetworkManager::BanClientIP(Client &cl) {
-    this->bannedIps.push_back(cl.IP);
-    this->DisconnectPlayer(cl, "banned");
+void NetworkManager::BanClientIP(sf::IpAddress ip) {
+    if (ip == sf::IpAddress::None) return;
+    for (auto cl : this->GetClientByIP(ip)) {
+        this->DisconnectPlayer(*cl, "banned");
+    }
+    if (this->bannedIps.find(ip) != this->bannedIps.end()) return;
+    this->bannedIps.insert(ip);
+    GHOST_LOG("Banned IP " + ip.toString());
 }
 
 void NetworkManager::ServerMessage(const char *msg) {

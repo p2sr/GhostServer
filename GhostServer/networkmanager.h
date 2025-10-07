@@ -103,18 +103,18 @@ private:
     void DoHeartbeats();
 
 public:
-    NetworkManager(const char *logfile = "ghost_log");
+    NetworkManager(const char *logfile = "ghost_log.log");
     ~NetworkManager();
 
     sf::UdpSocket udpSocket;
     std::vector<Client> clients;
-    std::vector<sf::IpAddress> bannedIps;
     bool isRunning = false;
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
-
+    
     bool whitelistEnabled = false;
     std::set<WhitelistEntry> whitelist;
+    std::set<sf::IpAddress> bannedIps;
 
     void ScheduleServerThread(std::function<void()> func);
 
@@ -134,7 +134,7 @@ public:
     void ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer);
     void Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short udp_port);
 
-    void BanClientIP(Client &cl);
+    void BanClientIP(sf::IpAddress ip);
     void ServerMessage(const char *msg);
 
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
