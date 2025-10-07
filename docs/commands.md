@@ -11,6 +11,7 @@
 |countdown|`pre <cmds>`<br/>`post <cmds>`<br/>`start <duration>`|start/modify a countdown|
 |kick|`name <name>`<br/>`id <id>`<br/>`ip <ip>`|kick a client|
 |ban|`name <name>`<br/>`id <id>`<br/>`ip <ip>`<br/>`list`|ban a client|
+|unban|`<ip>`|unban a client|
 |accept|`players`<br/>`spectators`<br/>`all`|start accepting connections|
 |refuse|`players`<br/>`spectators`<br/>`all`|stop accepting connections|
 |say|`<message>`|send a message to all clients|

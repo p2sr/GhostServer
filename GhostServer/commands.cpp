@@ -44,7 +44,7 @@ std::string ssprintf(const char *fmt, ...) {
 #endif
 
 
-// TODO: Add unban, and save bans/whitelist to disk
+// TODO: save bans/whitelist to disk
 
 void handle_cmd(NetworkManager *network, char *line) {
     std::string _line(line);
@@ -81,7 +81,7 @@ void handle_cmd(NetworkManager *network, char *line) {
     if (false) { // debug
         LINE("%d args:", (int)args.size());
         for (size_t i = 0; i < args.size(); ++i) {
-            LINE("%d: '%s' '%s' '%s'", (int)i, args[i].c_str(), argsL[i].c_str(), argsR[i].c_str());
+            LINE("  %d: '%s' '%s' '%s'", (int)i, args[i].c_str(), argsL[i].c_str(), argsR[i].c_str());
         }
     }
 
@@ -95,6 +95,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         LINE("  countdown             start/modify a countdown");
         LINE("  kick                  kick a client");
         LINE("  ban                   ban a client");
+        LINE("  unban                 unban a client");
         LINE("  accept                start accepting connections");
         LINE("  refuse                stop accepting connections");
         LINE("  say                   send a message to all clients");
@@ -306,6 +307,28 @@ void handle_cmd(NetworkManager *network, char *line) {
         } else {
             LINE("Usage: ban <name|id|ip|list> <value>");
         }
+        return;
+    }
+
+    if (cmd == "unban") {
+        if (args.size() != 2) {
+            LINE("Usage: unban <ip>");
+            return;
+        }
+        sf::IpAddress ip(args[1]);
+        if (ip == sf::IpAddress::None) {
+            LINE("Invalid IP address");
+            return;
+        }
+        network->ScheduleServerThread([=]() {
+            auto it = network->bannedIps.find(ip);
+            if (it == network->bannedIps.end()) {
+                LINE("IP %s is not banned", ip.toString().c_str());
+            } else {
+                network->bannedIps.erase(it);
+                LINE("Unbanned IP %s", ip.toString().c_str());
+            }
+        });
         return;
     }
 
