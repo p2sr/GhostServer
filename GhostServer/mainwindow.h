@@ -27,6 +27,7 @@ private:
     void StopServer();
     void ResetServer();
     void SubmitCommand();
+    void OnPresetChanged(int index);
 
 public slots:
     void AddEventLog(QString log) {ui.textBrowser->append(log);}

@@ -47,9 +47,6 @@
     <QtMoc Include="mainwindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="commands.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="networkmanager.h">
       <Filter>Header Files</Filter>
     </QtMoc>

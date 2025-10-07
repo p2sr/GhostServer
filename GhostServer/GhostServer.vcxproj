@@ -209,9 +209,6 @@
     <QtMoc Include="networkmanager.h">
       <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
     </QtMoc>
-    <QtMoc Include="commands.h">
-      <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mainwindow.ui">
