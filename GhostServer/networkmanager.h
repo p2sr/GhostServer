@@ -65,6 +65,7 @@ struct Client {
     bool returnedHeartbeat;
     bool missedLastHeartbeat;
     bool spectator;
+    std::chrono::time_point<std::chrono::steady_clock> lastLocator;
 };
 
 enum class WhitelistEntryType {

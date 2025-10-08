@@ -369,6 +369,12 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::Ip
         } \
     }
 
+#define SEND_TO_OTHERS_MAP(packet) \
+    for (auto& other : this->clients) \
+        if (other.ID != ID && other.currentMap == client->currentMap) { \
+            other.tcpSocket->send(packet); \
+        } \
+
 #define BROADCAST(packet) \
     for (auto& other : this->clients) { \
         other.tcpSocket->send(packet); \
@@ -461,15 +467,21 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
         break;
     }
     case HEADER::TAUNT: {
-        SEND_TO_OTHERS(packet);
+        SEND_TO_OTHERS_MAP(packet);
         break;
     }
     case HEADER::LOCATOR: {
-        SEND_TO_OTHERS(packet);
+        if (client->lastLocator.time_since_epoch().count() != 0 &&
+            std::chrono::steady_clock::now() - client->lastLocator < std::chrono::milliseconds(100)) {
+            // Rate limit locators to 10Hz
+            break;
+        }
+        client->lastLocator = std::chrono::steady_clock::now();
+        SEND_TO_OTHERS_MAP(packet);
         break;
     }
     case HEADER::VOICE: {
-        SEND_TO_OTHERS(packet);
+        SEND_TO_OTHERS_MAP(packet);
         break;
     }
     default:
