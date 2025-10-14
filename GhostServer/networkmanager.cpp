@@ -243,9 +243,23 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
         client.tcpSocket->send(packet);
     }
     if (true) { // TODO: Make this a setting?
-        this->acceptingPlayers = false;
-        GHOST_LOG("Now refusing connections from players");
+        this->SetAccept(true, false);
     }
+}
+
+void NetworkManager::SetAccept(bool players, bool allow)
+{
+    bool changed = false;
+    if (players) {
+        changed = this->acceptingPlayers != allow;
+        this->acceptingPlayers = allow;
+    } else {
+        changed = this->acceptingSpectators != allow;
+        this->acceptingSpectators = allow;
+    }
+    if (!changed) return;
+    GHOST_LOG(std::string("Now ") + (allow ? "accepting" : "refusing") + " connections from " + (players ? "players" : "spectators"));
+
 }
 
 bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)

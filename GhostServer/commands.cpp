@@ -340,20 +340,17 @@ void handle_cmd(NetworkManager *network, char *line) {
         std::string subcmd = argsL[1];
         if (subcmd == "players") {
             network->ScheduleServerThread([=]() {
-                network->acceptingPlayers = true;
+                network->SetAccept(true, true);
             });
-            LINE("Now accepting connections from players");
         } else if (subcmd == "spectators") {
             network->ScheduleServerThread([=]() {
-                network->acceptingSpectators = true;
+                network->SetAccept(false, true);
             });
-            LINE("Now accepting connections from spectators");
         } else if (subcmd == "all") {
             network->ScheduleServerThread([=]() {
-                network->acceptingPlayers = true;
-                network->acceptingSpectators = true;
+                network->SetAccept(true, true);
+                network->SetAccept(false, true);
             });
-            LINE("Now accepting connections from players and spectators");
         } else {
             LINE("Usage: accept <players|spectators|all>");
         }
@@ -368,20 +365,17 @@ void handle_cmd(NetworkManager *network, char *line) {
         std::string subcmd = argsL[1];
         if (subcmd == "players") {
             network->ScheduleServerThread([=]() {
-                network->acceptingPlayers = false;
+                network->SetAccept(true, false);
             });
-            LINE("Now refusing connections from players");
         } else if (subcmd == "spectators") {
             network->ScheduleServerThread([=]() {
-                network->acceptingSpectators = false;
+                network->SetAccept(false, false);
             });
-            LINE("Now refusing connections from spectators");
         } else if (subcmd == "all") {
             network->ScheduleServerThread([=]() {
-                network->acceptingPlayers = false;
-                network->acceptingSpectators = false;
+                network->SetAccept(true, false);
+                network->SetAccept(false, false);
             });
-            LINE("Now refusing connections from players and spectators");
         } else {
             LINE("Usage: refuse <players|spectators|all>");
         }

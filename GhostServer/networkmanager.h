@@ -133,6 +133,7 @@ public:
     bool ShouldBlockConnection(const sf::IpAddress &ip);
     void DisconnectPlayer(Client &client, const char *reason);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
+    void SetAccept(bool players, bool accept);
 
     void CheckConnection();
     void ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer);
