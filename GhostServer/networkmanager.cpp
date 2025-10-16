@@ -194,6 +194,9 @@ void NetworkManager::StopServer()
 {
     if (this->isRunning) {
         this->isRunning = false;
+        if (this->serverThread.joinable()) {
+            this->serverThread.join();
+        }
         return;
     }
 
