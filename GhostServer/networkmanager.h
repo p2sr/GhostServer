@@ -146,7 +146,8 @@ public:
 
 #ifdef GHOST_GUI
 signals:
-    void OnNewEvent(QString event);
+    void OnNewEvent(QString log);
+    void UIEvent(std::string event);
 #endif
 
 

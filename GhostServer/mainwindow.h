@@ -32,12 +32,13 @@ private:
 	void StartServer();
     void StopServer();
     void ResetServer();
+    void StartCountdown();
     void SubmitCommand();
     void OnPresetChanged(int index);
 
 public slots:
     void AddEventLog(QString log) {ui.textBrowser->append(log);}
-    void StartCountdown();
+    void UIEvent(std::string event);
 
 
 };

@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget* parent)
     network = new NetworkManager("ghost_log");
 
     connect(network, &NetworkManager::OnNewEvent, this, &MainWindow::AddEventLog);
+    connect(network, &NetworkManager::UIEvent, this, &MainWindow::UIEvent);
     connect(ui.serverButton, &QPushButton::clicked, this, &MainWindow::StartServer);
     connect(ui.startCountdown, &QPushButton::clicked, this, &MainWindow::StartCountdown);
     connect(ui.resetButton, &QPushButton::clicked, this, &MainWindow::ResetServer);
@@ -129,4 +130,8 @@ void MainWindow::OnPresetChanged(int index)
     const CountdownPreset& preset = countdownPresets[index];
     ui.preCommandList->setPlainText(preset.preCommands);
     ui.postCommandList->setPlainText(preset.postCommands);
+}
+
+void MainWindow::UIEvent(std::string event)
+{
 }

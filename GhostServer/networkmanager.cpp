@@ -23,9 +23,11 @@ static void file_log(std::string str) {
 #ifdef GHOST_GUI
 # include <QVector>
 # define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
+# define UI_EVENT(x) (emit this->UIEvent(x))
 #else
 # include <stdio.h>
 # define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
+# define UI_EVENT(x) ((void)0)
 #endif
 
 #define HEARTBEAT_RATE 5000
@@ -36,7 +38,7 @@ static void file_log(std::string str) {
 #ifdef _WIN32
 # define strcasecmp _stricmp
 #else
-#	include <strings.h>
+# include <strings.h>
 #endif
 
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
@@ -180,6 +182,8 @@ bool NetworkManager::StartServer(const int port)
     this->serverThread = std::thread(&NetworkManager::RunServer, this);
     this->serverThread.detach();
 
+    UI_EVENT("server_start");
+    UI_EVENT("client_change");
     GHOST_LOG("Server started on " + this->serverIP.toString() + " (public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
     GHOST_LOG("Enter 'help' for a list of commands.");
 
@@ -202,6 +206,8 @@ void NetworkManager::StopServer()
     this->udpSocket.unbind();
     this->listener.close();
 
+    UI_EVENT("client_change");
+    UI_EVENT("server_stop");
     GHOST_LOG("Server stopped!");
 }
 
@@ -225,6 +231,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
 
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
+        UI_EVENT("client_change");
     }
 }
 
@@ -258,6 +265,7 @@ void NetworkManager::SetAccept(bool players, bool allow)
         this->acceptingSpectators = allow;
     }
     if (!changed) return;
+    UI_EVENT("accept_refuse");
     GHOST_LOG(std::string("Now ") + (allow ? "accepting" : "refusing") + " connections from " + (players ? "players" : "spectators"));
 
 }
@@ -357,6 +365,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
+    UI_EVENT("client_change");
     GHOST_LOG("Connection: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
@@ -430,6 +439,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
         std::string map;
         packet >> map;
         client->currentMap = map;
+        UI_EVENT("client_change");
         GHOST_LOG(client->name + " is now on " + map);
         SEND_TO_OTHERS(packet);
         break;
