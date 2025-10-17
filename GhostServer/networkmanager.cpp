@@ -279,6 +279,10 @@ bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
         return true;
     }
 
+    if (ip == sf::IpAddress::None) {
+        return true;
+    }
+
     if (this->bannedIps.find(ip) != this->bannedIps.end()) {
         return true;
     }
@@ -298,18 +302,18 @@ void NetworkManager::CheckConnection()
     client.IP = client.tcpSocket->getRemoteAddress();
     
     if (this->ShouldBlockConnection(client.IP)) {
-        GHOST_LOG("Refused connection from " + client.IP.toString() + " - banned or IP already connected");
+        GHOST_LOG("Refused connection from " + client.IP.toString() + " - blocked");
         return;
     }
 
-    sf::Packet connection_packet;
     sf::SocketSelector conn_selector;
     conn_selector.add(*client.tcpSocket);
     if (!conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT))) {
         GHOST_LOG("Connection timeout from " + client.IP.toString());
         return;
     }
-
+    
+    sf::Packet connection_packet;
     client.tcpSocket->receive(connection_packet);
 
     HEADER header;
