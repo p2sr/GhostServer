@@ -235,6 +235,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
         UI_EVENT("client_change");
+        OnConnectedClientsChanged();
     }
 }
 
@@ -374,6 +375,7 @@ void NetworkManager::CheckConnection()
 
     UI_EVENT("client_change");
     GHOST_LOG("Connection: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    OnConnectedClientsChanged();
 
     this->clients.push_back(std::move(client));
 }
@@ -657,4 +659,15 @@ bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
     });
 
     return index != whitelist.end();
+}
+
+void NetworkManager::OnConnectedClientsChanged() {
+    for (auto const& [id, callback] : connectedClientsChangedCallbacks) {
+        callback();
+    }
+}
+
+int NetworkManager::RegisterConnectedClientsChangedCallback(std::function<void()> callback) {
+    connectedClientsChangedCallbacks.insert({connectedClientsChangedCallbackId++, callback});
+    return connectedClientsChangedCallbackId - 1;
 }
