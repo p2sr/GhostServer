@@ -2,13 +2,14 @@
 
 #include <SFML/Network.hpp>
 
-#include <vector>
-#include <set>
-#include <mutex>
 #include <atomic>
-#include <thread>
 #include <cstdint>
 #include <functional>
+#include <map>
+#include <mutex>
+#include <set>
+#include <thread>
+#include <vector>
 
 #ifdef GHOST_GUI
 #include <QObject>
@@ -104,7 +105,12 @@ private:
 
     sf::Clock clock;
 
+    std::map<int, std::function<void()>> connectedClientsChangedCallbacks;
+    int connectedClientsChangedCallbackId = 1;
+
     void DoHeartbeats();
+
+    void OnConnectedClientsChanged();
 
 public:
     NetworkManager(const char *logfile = "ghost_log.log");
@@ -144,11 +150,12 @@ public:
 
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
 
+    int RegisterConnectedClientsChangedCallback(std::function<void()> callback);
+    void UnregisterConnectedClientsChangedCallback(int id) { connectedClientsChangedCallbacks.erase(id); }
+
 #ifdef GHOST_GUI
 signals:
     void OnNewEvent(QString log);
     void UIEvent(std::string event);
 #endif
-
-
 };
