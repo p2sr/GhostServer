@@ -23,11 +23,9 @@ static void file_log(std::string str) {
 #ifdef GHOST_GUI
 # include <QVector>
 # define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
-# define UI_EVENT(x) (emit this->UIEvent(x))
 #else
 # include <stdio.h>
 # define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
-# define UI_EVENT(x) ((void)0)
 #endif
 
 #define HEARTBEAT_RATE 5000
@@ -235,7 +233,6 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
         UI_EVENT("client_change");
-        OnConnectedClientsChanged();
     }
 }
 
@@ -373,11 +370,11 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    UI_EVENT("client_change");
     GHOST_LOG("Connection: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
-    OnConnectedClientsChanged();
 
     this->clients.push_back(std::move(client));
+
+    UI_EVENT("client_change");
 }
 
 void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer)
@@ -661,13 +658,18 @@ bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
     return index != whitelist.end();
 }
 
-void NetworkManager::OnConnectedClientsChanged() {
-    for (auto const& [id, callback] : connectedClientsChangedCallbacks) {
-        callback();
+
+void NetworkManager::UI_EVENT(std::string event) {
+    for (auto item : uiEventCallbacks) {
+        auto [type, callback] = item.second;
+        if (type == event) callback();
     }
+#ifdef GHOST_GUI
+    emit this->UIEvent(event);
+#endif
 }
 
-int NetworkManager::RegisterConnectedClientsChangedCallback(std::function<void()> callback) {
-    connectedClientsChangedCallbacks.insert({connectedClientsChangedCallbackId++, callback});
-    return connectedClientsChangedCallbackId - 1;
+int NetworkManager::RegisterEventCallback(std::string type, std::function<void()> callback) {
+    uiEventCallbacks.insert({uiEventCallbackId++, {type, callback}});
+    return uiEventCallbackId - 1;
 }
