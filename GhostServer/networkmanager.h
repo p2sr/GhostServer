@@ -105,12 +105,10 @@ private:
 
     sf::Clock clock;
 
-    std::map<int, std::function<void()>> connectedClientsChangedCallbacks;
-    int connectedClientsChangedCallbackId = 1;
+    std::map<int, std::tuple<std::string, std::function<void()>>> uiEventCallbacks;
+    int uiEventCallbackId = 1;
 
     void DoHeartbeats();
-
-    void OnConnectedClientsChanged();
 
 public:
     NetworkManager(const char *logfile = "ghost_log.log");
@@ -150,8 +148,9 @@ public:
 
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
 
-    int RegisterConnectedClientsChangedCallback(std::function<void()> callback);
-    void UnregisterConnectedClientsChangedCallback(int id) { connectedClientsChangedCallbacks.erase(id); }
+    void UI_EVENT(std::string event);
+    int RegisterEventCallback(std::string type, std::function<void()> callback);
+    void UnregisterEventCallback(int id) { uiEventCallbacks.erase(id); }
 
 #ifdef GHOST_GUI
 signals:
