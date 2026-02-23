@@ -43,7 +43,7 @@ jobs:
           echo "set man-db/auto-update false" | sudo debconf-communicate
           sudo dpkg-reconfigure man-db
       - name: Install Dependencies
-        run: sudo apt-get install -y g++-10-multilib qt6-base-dev
+        run: sudo apt-get install -y g++ qt6-base-dev
       - name: Build
         run: |
           echo UIC=/usr/lib/qt6/libexec/uic > config.mk
