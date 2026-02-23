@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     });
 
     if (argc > 3 || (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")))) {
-        printf("Usage: %s [port] [logfile]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [port] [logfile]\n", argv[0]);
         return 1;
     }
 
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     if (argc >= 2) {
         port = atoi(argv[1]);
         if (port < 1 || port > 65535) {
-            printf("Invalid port %d\n", port);
+            fprintf(stderr, "Invalid port %d\n", port);
             return 1;
         }
     }
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
     puts("Server starting up");
     if (!network.StartServer(port)) {
-        printf("Failed to start server on port %d\n", port);
+        fprintf(stderr, "Failed to start server on port %d\n", port);
         return 1;
     }
     while (!g_should_stop) {

@@ -25,7 +25,7 @@ static void file_log(std::string str) {
 # define GHOST_LOG(x) (file_log(x), emit this->OnNewEvent(QString::fromStdString(x)))
 #else
 # include <stdio.h>
-# define GHOST_LOG(x) (file_log(x), printf("[LOG] %s\n", std::string(x).c_str()))
+# define GHOST_LOG(x) (file_log(x), fprintf(stderr, "[LOG] %s\n", std::string(x).c_str()))
 #endif
 
 #define HEARTBEAT_RATE 5000
