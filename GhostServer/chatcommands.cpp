@@ -186,7 +186,7 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
                 MSG("You are not logged in.");
                 return true;
             }
-            std::string command = argsR[2];
+            std::string command = argsR[1];
             network->Log("[admin] cmd: " + command);
             handle_cmd(network, const_cast<char*>(command.c_str()));
             MSG("Executed command: '%s'", command.c_str());
