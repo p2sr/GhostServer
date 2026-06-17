@@ -139,6 +139,23 @@ void handle_cmd(NetworkManager *network, char *line) {
     }
 
     if (cmd == "list") {
+        if (args.size() == 2) {
+            std::string subcmd = argsL[1];
+            if (subcmd == "always") {
+                network->ScheduleServerThread([=]() {
+                    network->SetAlwaysListClients(true);
+                });
+                return;
+            } else if (subcmd == "never") {
+                network->ScheduleServerThread([=]() {
+                    network->SetAlwaysListClients(false);
+                });
+                return;
+            } else {
+                LINE("Usage: list [always|never]");
+                return;
+            }
+        }
         network->ScheduleServerThread([=]() {
             if (network->clients.empty()) {
                 LINE("No clients");

@@ -1,5 +1,7 @@
 #include "networkmanager.h"
 
+#include "commands.h"
+
 #include <memory>
 #include <chrono>
 #include <cstdio>
@@ -233,6 +235,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
         UI_EVENT("client_change");
+        if (this->alwaysListClients) handle_cmd(this, const_cast<char*>("list"));
     }
 }
 
@@ -269,6 +272,14 @@ void NetworkManager::SetAccept(bool players, bool allow)
     UI_EVENT("accept_refuse");
     GHOST_LOG(std::string("Now ") + (allow ? "accepting" : "refusing") + " connections from " + (players ? "players" : "spectators"));
 
+}
+
+void NetworkManager::SetAlwaysListClients(bool alwaysList) {
+    bool changed = this->alwaysListClients != alwaysList;
+    this->alwaysListClients = alwaysList;
+    if (!changed) return;
+    UI_EVENT("client_change");
+    GHOST_LOG(std::string("Now ") + (alwaysList ? "" : "not ") + "listing clients on connect/disconnect");
 }
 
 bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
@@ -380,6 +391,7 @@ void NetworkManager::CheckConnection()
     this->clients.push_back(std::move(client));
 
     UI_EVENT("client_change");
+    if (this->alwaysListClients) handle_cmd(this, const_cast<char*>("list"));
 }
 
 void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer)

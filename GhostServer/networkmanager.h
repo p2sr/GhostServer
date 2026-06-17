@@ -119,6 +119,7 @@ public:
     bool isRunning = false;
     bool acceptingPlayers = true;
     bool acceptingSpectators = true;
+    bool alwaysListClients = false;
     
     bool whitelistEnabled = false;
     std::set<WhitelistEntry> whitelist;
@@ -138,6 +139,7 @@ public:
     void DisconnectPlayer(Client &client, const char *reason);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
     void SetAccept(bool players, bool accept);
+    void SetAlwaysListClients(bool alwaysList);
 
     void CheckConnection();
     void ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer);
