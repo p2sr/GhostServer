@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <chrono>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <queue>
@@ -237,7 +238,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
     if (toErase != -1) {
         this->clients.erase(this->clients.begin() + toErase);
         UI_EVENT("client_change");
-        if (this->alwaysListClients) handle_cmd(this, const_cast<char*>("list"));
+        if (this->alwaysListClients) this->ListClients();
     }
 }
 
@@ -393,7 +394,7 @@ void NetworkManager::CheckConnection()
     this->clients.push_back(std::move(client));
 
     UI_EVENT("client_change");
-    if (this->alwaysListClients) handle_cmd(this, const_cast<char*>("list"));
+    if (this->alwaysListClients) this->ListClients();
 }
 
 void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer)
@@ -684,6 +685,23 @@ void NetworkManager::DoHeartbeats()
                 this->DisconnectPlayer(client, "socket died");
                 --i;
             }
+        }
+    }
+}
+
+void NetworkManager::ListClients() {
+    if (this->clients.empty()) {
+        GHOST_LOG("No clients");
+    } else {
+        GHOST_LOG("Clients:");
+        for (auto &cl : this->clients) {
+            GHOST_LOG(ssprintf("  %-3d '%s' (%s) @ %s:%d @ '%s'",
+                cl.ID,
+                cl.name.c_str(),
+                cl.spectator ? "spectator" : "player",
+                cl.IP.toString().c_str(),
+                (int)cl.port,
+                cl.currentMap.empty() ? "menu" : cl.currentMap.c_str()));
         }
     }
 }

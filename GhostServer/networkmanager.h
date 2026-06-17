@@ -151,6 +151,7 @@ public:
     void BanClientIP(sf::IpAddress ip);
     void ServerMessage(const char *msg);
 
+    void ListClients();
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
     void SetAdminUsername(std::string username);
     void SetAdminPassword(std::string password);
