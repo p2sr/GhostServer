@@ -68,6 +68,7 @@ struct Client {
     bool spectator;
     std::chrono::time_point<std::chrono::steady_clock> lastLocator;
     bool ready = false;
+    bool tickerSub = true; // subscribed to ticker
 };
 
 enum class WhitelistEntryType {

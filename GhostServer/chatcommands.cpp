@@ -49,14 +49,20 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
     }
     if (args.empty()) return false;
 
+    network->UI_EVENT("get_countdown_info");
     std::string cmd = argsL[0];
     if (cmd == "help") {
         MSG("Available chat commands:");
-        MSG("  !help  \t show this list");
-        MSG("  !ping  \t Pong!");
-        MSG("  !ready \t toggle ready status (!r)");
-        MSG("  !roll  \t roll a die (1-100 or !roll <max>)");
-        MSG("  !admin \t server management command");
+        MSG("  !help \t show this list");
+        MSG("  !ping \t Pong!");
+        if (network->countdownPostCommands != "") {
+            MSG("  !ready \t toggle ready status (!r)");
+        }
+        MSG("  !roll \t pick a random number");
+        if (network->tickerStrings.size() > 0) {
+            MSG("  !ticker \t toggle ticker messages");
+        }
+        // MSG("  !admin \t server management command");
         return true;
     }
 
@@ -66,7 +72,6 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
     }
 
     if (cmd == "ready" || cmd == "r") {
-        network->UI_EVENT("get_countdown_info");
         if (network->countdownPostCommands == "") {
             MSG("Countdown is not enabled.");
             return true;
@@ -78,11 +83,27 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
     }
 
     if (cmd == "roll") {
+        size_t min = 1;
         size_t max = 100;
-        if (args.size() == 2) {
-            max = atol(args[1].c_str());
+        if (args.size() > 3) {
+            MSG("Usage: !roll [max] or !roll <min> <max>");
+            return true;
+        }
+        if (args.size() == 2 || args.size() == 3) {
+            if (args.size() == 3) {
+                min = atol(args[1].c_str());
+                if (min <= 0) {
+                    MSG("Usage: !roll [max] or !roll <min> <max>");
+                    return true;
+                }
+            }
+            max = atol(args[args.size() - 1].c_str());
             if (max <= 1) {
                 MSG("Usage: !roll [max]");
+                return true;
+            }
+            if (max <= min) {
+                MSG("Max must be greater than min.");
                 return true;
             }
             if (max > RAND_MAX || max > 1000000) {
@@ -90,13 +111,34 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
                 return true;
             }
         }
-        int roll = rand() % max + 1;
-        if (max == 100) {
+        int roll = rand() % (max - min + 1) + min;
+        if (min == 1 && max == 100) {
             MSG_ALL("%s rolled a %d.", client->name.c_str(), roll);
         } else {
-            MSG_ALL("%s rolled a %d out of %lu.", client->name.c_str(), roll, max);
+            MSG_ALL("%s rolled a %d from %lu-%lu.", client->name.c_str(), roll, min, max);
         }
         return false;
+    }
+
+    if (cmd == "ticker") {
+        if (args.size() == 1) {
+            client->tickerSub = !client->tickerSub;
+        } else if (args.size() == 2) {
+            std::string subcmd = argsL[1];
+            if (subcmd == "on") {
+                client->tickerSub = true;
+            } else if (subcmd == "off") {
+                client->tickerSub = false;
+            } else {
+                MSG("Usage: !ticker [on|off]");
+                return true;
+            }
+        } else {
+            MSG("Usage: !ticker [on|off]");
+            return true;
+        }
+        MSG("Ticker messages %s.", client->tickerSub ? "enabled" : "disabled");
+        return true;
     }
 
     if (cmd == "admin") {

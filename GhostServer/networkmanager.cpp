@@ -653,7 +653,11 @@ void NetworkManager::RunServer()
             if (clients.size() > 0) {
                 tickerIndex %= tickerStrings.size();
                 if (!tickerStrings.empty() && tickerIndex < tickerStrings.size()) {
-                    ServerMessage(tickerStrings[tickerIndex]);
+                    for (auto &client : this->clients) {
+                        if (client.tickerSub) {
+                            ServerMessage(client.ID, tickerStrings[tickerIndex]);
+                        }
+                    }
                     tickerIndex++;
                 }
                 tickerIndex %= tickerStrings.size();
