@@ -1,5 +1,6 @@
 #include "networkmanager.h"
 
+#include "chatcommands.h"
 #include "commands.h"
 
 #include <memory>
@@ -439,14 +440,6 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::Ip
     } while (status == sf::Socket::Done);
 }
 
-#define SEND_REPLY(packet) \
-    for (auto& other : this->clients) { \
-        if (other.ID == ID) { \
-            other.tcpSocket->send(packet); \
-            break; \
-        } \
-    }
-
 void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short udp_port)
 {
     HEADER header;
@@ -500,28 +493,10 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     case HEADER::MESSAGE: {
         std::string message;
         packet >> message;
-        if (message.length() >= 7 && message.substr(0, 7) == "!admin ") {
-            sf::Packet reply;
-            reply << HEADER::MESSAGE << sf::Uint32(0);
-            if (!this->adminUsername.empty() && !this->adminPassword.empty()) {
-                if (client->name == this->adminUsername) {
-                    message = message.substr(7);
-                    if (message.length() > this->adminPassword.length() + 1 && message.substr(0, this->adminPassword.length() + 1) == this->adminPassword + " ") {
-                        std::string cmd = message.substr(this->adminPassword.length() + 1);
-                        GHOST_LOG("[admin] cmd: " + cmd);
-                        handle_cmd(this, const_cast<char*>(cmd.c_str()));
-                        reply << "Executed admin command: '" + cmd + "'";
-                        SEND_REPLY(reply);
-                        return;
-                    } else GHOST_LOG("[admin] reject: incorrect password");
-                } else GHOST_LOG("[admin] reject: username '" + client->name + "' is not admin");
-            } else GHOST_LOG("[admin] reject: no admin credentials set");
-            reply << "Invalid admin credentials.";
-            SEND_REPLY(reply);
-            return;
-        }
         GHOST_LOG("[message] " + client->name + ": " + message);
-        SendPacketExclude(ID, packet);
+        if (!handle_chat_cmd(this, ID, message)) {
+            SendPacketExclude(ID, packet);
+        }
         break;
     }
     case HEADER::COUNTDOWN: {
@@ -789,6 +764,16 @@ void NetworkManager::SetAdminUsername(std::string username) {
 void NetworkManager::SetAdminPassword(std::string password) {
     this->adminPassword = password;
 }
+
+bool NetworkManager::IsAdmin(sf::Uint32 playerID, std::string password) {
+    if (this->adminUsername.empty() || this->adminPassword.empty()) return false;
+    auto client = GetClientByID(playerID);
+    if (!client) return false;
+    if (client->name != this->adminUsername) return false;
+    if (password != this->adminPassword) return false;
+    return true;
+}
+
 void NetworkManager::Log(const std::string& message) {
     GHOST_LOG(message);
 }

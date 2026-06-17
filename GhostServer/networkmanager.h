@@ -171,6 +171,7 @@ public:
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
     void SetAdminUsername(std::string username);
     void SetAdminPassword(std::string password);
+    bool IsAdmin(sf::Uint32 playerID, std::string password);
 
     void Log(const std::string& message);
     void UI_EVENT(std::string event);

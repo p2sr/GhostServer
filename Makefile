@@ -9,10 +9,10 @@ UIC=uic
 MOC=moc
 RCC=rcc
 
-SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp $(SDIR)/GhostServer_qrc.cpp
+SRCS_GUI=$(SDIR)/main.cpp $(SDIR)/mainwindow.cpp $(SDIR)/chatcommands.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp $(SDIR)/mainwindow_qt.cpp $(SDIR)/networkmanager_qt.cpp $(SDIR)/GhostServer_qrc.cpp
 OBJS_GUI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/gui/%.o, $(SRCS_GUI))
 
-SRCS_CLI=$(SDIR)/main_cli.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp
+SRCS_CLI=$(SDIR)/main_cli.cpp $(SDIR)/chatcommands.cpp $(SDIR)/commands.cpp $(SDIR)/networkmanager.cpp
 OBJS_CLI=$(patsubst $(SDIR)/%.cpp, $(ODIR)/cli/%.o, $(SRCS_CLI))
 
 DEPS=$(OBJS_GUI:%.o=%.d)

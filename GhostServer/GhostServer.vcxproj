@@ -191,6 +191,7 @@
     <ClCompile Include="mainwindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)'=='DebugCLI' or '$(Configuration)'=='ReleaseCLI'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="chatcommands.cpp" />
     <ClCompile Include="commands.cpp" />
     <ClCompile Include="networkmanager.cpp" />
     <ClCompile Include="main_cli.cpp">
