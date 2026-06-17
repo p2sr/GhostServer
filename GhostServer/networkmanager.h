@@ -67,6 +67,7 @@ struct Client {
     bool missedLastHeartbeat;
     bool spectator;
     std::chrono::time_point<std::chrono::steady_clock> lastLocator;
+    bool ready = false;
 };
 
 enum class WhitelistEntryType {
@@ -172,6 +173,7 @@ public:
     void SetAdminUsername(std::string username);
     void SetAdminPassword(std::string password);
     bool IsAdmin(sf::Uint32 playerID, std::string password);
+    void SetReady(sf::Uint32 playerID, bool ready);
 
     void Log(const std::string& message);
     void UI_EVENT(std::string event);

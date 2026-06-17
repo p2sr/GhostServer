@@ -54,6 +54,7 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
         MSG("Available chat commands:");
         MSG("  !help  \t show this list");
         MSG("  !ping  \t Pong!");
+        MSG("  !ready \t toggle ready status (!r)");
         MSG("  !roll  \t roll a die (1-100 or !roll <max>)");
         MSG("  !admin \t server management command");
         return true;
@@ -61,6 +62,18 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
 
     if (cmd == "ping") {
         MSG("Pong! Use 'ghost_ping' to measure latency.");
+        return true;
+    }
+
+    if (cmd == "ready" || cmd == "r") {
+        network->UI_EVENT("get_countdown_info");
+        if (network->countdownPostCommands == "") {
+            MSG("Countdown is not enabled.");
+            return true;
+        }
+        bool ready = !client->ready;
+        MSG_ALL("%s is %sready!", client->name.c_str(), ready ? "" : "not ");
+        network->SetReady(playerID, ready);
         return true;
     }
 

@@ -774,6 +774,25 @@ bool NetworkManager::IsAdmin(sf::Uint32 playerID, std::string password) {
     return true;
 }
 
+void NetworkManager::SetReady(sf::Uint32 playerID, bool ready) {
+    UI_EVENT("get_countdown_info");
+    if (this->countdownPostCommands == "") return;
+    auto client = GetClientByID(playerID);
+    if (!client) return;
+    client->ready = ready;
+    UI_EVENT("client_change");
+    if (ready) {
+        size_t playerCount = std::count_if(this->clients.begin(), this->clients.end(), [](const Client& c) { return !c.spectator; });
+        size_t readyCount = std::count_if(this->clients.begin(), this->clients.end(), [](const Client& c) { return !c.spectator && c.ready; });
+        if (readyCount == playerCount) {
+            ServerMessage("Everyone is ready! The countdown is starting!");
+            StartCountdown();
+        } else {
+            ServerMessage(ssprintf("%d/%d players are ready!", (int)readyCount, (int)playerCount));
+        }
+    }
+}
+
 void NetworkManager::Log(const std::string& message) {
     GHOST_LOG(message);
 }
