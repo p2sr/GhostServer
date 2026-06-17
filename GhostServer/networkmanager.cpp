@@ -614,7 +614,7 @@ void NetworkManager::RunServer()
     this->isRunning = true;
     this->clock.restart();
 
-    while (this->isRunning) {
+    while (this->isRunning) try {
         auto now = std::chrono::steady_clock::now();
         if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE_MS)) {
             this->DoHeartbeats();
@@ -696,6 +696,8 @@ void NetworkManager::RunServer()
         }
         g_server_queue.clear();
         g_server_queue_mutex.unlock();
+    } catch (std::exception &e) {
+        GHOST_LOG(std::string("Exception in server loop: ") + e.what());
     }
 
     this->StopServer();
