@@ -117,7 +117,7 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
         } else {
             MSG_ALL("%s rolled a %d from %lu-%lu.", client->name.c_str(), roll, min, max);
         }
-        return false;
+        return true;
     }
 
     if (cmd == "ticker") {
