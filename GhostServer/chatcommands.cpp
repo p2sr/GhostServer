@@ -142,20 +142,57 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
     }
 
     if (cmd == "admin") {
-        if (args.size() < 3) {
-            MSG("Usage: !admin <password> <command>");
+        if (args.size() < 2) {
+            MSG("Usage: !admin <login|logout|cmd>");
             return true;
         }
-        std::string password = args[1];
-        std::string command = argsR[1];
-        if (network->IsAdmin(playerID, password)) {
+
+        std::string subcmd = argsL[1];
+        if (subcmd == "login") {
+            if (client->admin) {
+                MSG("You are already logged in.");
+                return true;
+            }
+            if (args.size() != 4) {
+                MSG("Usage: !admin login <username> <password>");
+                return true;
+            }
+            std::string username = args[2];
+            std::string password = args[3];
+            if (network->IsAdminCredential(username, password)) {
+                network->Log("[admin] " + username + " logged in");
+                MSG("Admin login successful.");
+                client->admin = true;
+            } else {
+                network->Log("[admin] failed login attempt for username: " + username);
+                MSG("Admin login failed. It's case sensitive.");
+            }
+            return true;
+        } else if (subcmd == "logout") {
+            if (!client->admin) {
+                MSG("You are not logged in.");
+                return true;
+            }
+            client->admin = false;
+            network->Log("[admin] " + client->name + " logged out");
+            MSG("Admin logout successful.");
+            return true;
+        } else if (subcmd == "cmd") {
+            if (args.size() < 3) {
+                MSG("Usage: !admin cmd <command>");
+                return true;
+            }
+            if (!client->admin) {
+                MSG("You are not logged in.");
+                return true;
+            }
+            std::string command = argsR[2];
             network->Log("[admin] cmd: " + command);
             handle_cmd(network, const_cast<char*>(command.c_str()));
-            MSG("Executed admin command: '%s'", command.c_str());
-        } else {
-            network->Log("[admin] reject: incorrect credentials");
-            MSG("Admin command rejected.");
+            MSG("Executed command: '%s'", command.c_str());
+            return true;
         }
+        MSG("Usage: !admin <login|logout|cmd>");
         return true;
     }
 

@@ -69,6 +69,7 @@ struct Client {
     std::chrono::time_point<std::chrono::steady_clock> lastLocator;
     bool ready = false;
     bool tickerSub = true; // subscribed to ticker
+    bool admin = false;
 };
 
 enum class WhitelistEntryType {
@@ -173,7 +174,7 @@ public:
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
     void SetAdminUsername(std::string username);
     void SetAdminPassword(std::string password);
-    bool IsAdmin(sf::Uint32 playerID, std::string password);
+    bool IsAdminCredential(std::string username, std::string password);
     void SetReady(sf::Uint32 playerID, bool ready);
 
     void Log(const std::string& message);

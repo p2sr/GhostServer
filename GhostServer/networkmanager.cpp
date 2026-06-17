@@ -769,11 +769,9 @@ void NetworkManager::SetAdminPassword(std::string password) {
     this->adminPassword = password;
 }
 
-bool NetworkManager::IsAdmin(sf::Uint32 playerID, std::string password) {
+bool NetworkManager::IsAdminCredential(std::string username, std::string password) {
     if (this->adminUsername.empty() || this->adminPassword.empty()) return false;
-    auto client = GetClientByID(playerID);
-    if (!client) return false;
-    if (client->name != this->adminUsername) return false;
+    if (username != this->adminUsername) return false;
     if (password != this->adminPassword) return false;
     return true;
 }
