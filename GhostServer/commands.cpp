@@ -162,7 +162,13 @@ void handle_cmd(NetworkManager *network, char *line) {
             } else {
                 LINE("Clients:");
                 for (auto &cl : network->clients) {
-                    LINE("  %-3d %s @ %s:%d", cl.ID, cl.name.c_str(), cl.IP.toString().c_str(), (int)cl.port);
+                    LINE("  %-3d '%s' (%s) @ %s:%d @ '%s'",
+                        cl.ID,
+                        cl.name.c_str(),
+                        cl.spectator ? "spectator" : "player",
+                        cl.IP.toString().c_str(),
+                        (int)cl.port,
+                        cl.currentMap.empty() ? "menu" : cl.currentMap.c_str());
                 }
             }
         });

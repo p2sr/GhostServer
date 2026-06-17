@@ -225,7 +225,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
         if (client.IP != c.IP) {
             client.tcpSocket->send(packet);
         } else {
-            GHOST_LOG("Disconnect: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
+            GHOST_LOG("Disconnect: '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
             this->selector.remove(*client.tcpSocket);
             client.tcpSocket->disconnect();
             toErase = id;
@@ -386,7 +386,7 @@ void NetworkManager::CheckConnection()
         c.tcpSocket->send(packet_notify_all);
     }
 
-    GHOST_LOG("Connection: " + client.name + " (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    GHOST_LOG("Connection: '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 
