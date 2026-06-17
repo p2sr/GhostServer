@@ -21,6 +21,11 @@ Server for the Ghost feature in [SourceAutoRecord](https://github.com/p2sr/Sourc
   - You can set some commands to execute before and after the countdown. You can write them on one line like `sv_cheats 0; say lol` or on multi-line
 - Server stops by clicking on the `Stop Server` button (previously `Start Server`)
 
+|Environment variable|Description|
+|-|-|
+|`GHOST_ADMIN_USERNAME`|Set the name of the admin user. If unset, admin authentication is disabled. This can be changed using the `admin` admin command.|
+|`GHOST_ADMIN_PASSWORD`|Set the password for the admin user. If unset, admin authentication is disabled. This can be changed using the `admin` admin command.|
+
 ## Contributing
 
 Pull requests are welcome.

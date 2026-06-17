@@ -98,15 +98,8 @@ void MainWindow::ResetServer()
 
 void MainWindow::StartCountdown()
 {
-    QTextDocument* pre_doc = ui.preCommandList->document();
-    QString pre_cmds = pre_doc->toPlainText().split(QString("\n")).join(QString("; "));
-
-
-    QTextDocument* post_doc = ui.postCommandList->document();
-    QString post_cmds = post_doc->toPlainText().split(QString("\n")).join(QString("; "));
-
-    int duration = ui.duration->value();
-    this->network->StartCountdown(pre_cmds.toStdString(), post_cmds.toStdString(), duration);
+    UIEvent("get_countdown_info");
+    this->network->StartCountdown();
 }
 
 void MainWindow::SubmitCommand()
@@ -134,4 +127,16 @@ void MainWindow::OnPresetChanged(int index)
 
 void MainWindow::UIEvent(std::string event)
 {
+    if (event == "get_countdown_info") {
+        QTextDocument* pre_doc = ui.preCommandList->document();
+        QString pre_cmds = pre_doc->toPlainText().split(QString("\n")).join(QString("; "));
+        std::string pre_cmdsS = pre_cmds.toStdString();
+
+        QTextDocument* post_doc = ui.postCommandList->document();
+        QString post_cmds = post_doc->toPlainText().split(QString("\n")).join(QString("; "));
+        std::string post_cmdsS = post_cmds.toStdString();
+        this->network->countdownPreCommands = pre_cmdsS;
+        this->network->countdownPostCommands = post_cmdsS;
+        this->network->countdownDuration = ui.duration->value();
+    }
 }

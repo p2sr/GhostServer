@@ -127,9 +127,13 @@ public:
     bool whitelistEnabled = false;
     std::set<WhitelistEntry> whitelist;
     std::set<sf::IpAddress> bannedIps;
+    std::string countdownPreCommands = "";
+    std::string countdownPostCommands = "";
+    int countdownDuration = 3;
 
     void ScheduleServerThread(std::function<void()> func);
 
+    const std::vector<Client *> GetClients();
     std::vector<Client *> GetPlayerByName(const std::string name);
     Client* GetClientByID(const sf::Uint32 ID);
     std::vector<Client *> GetClientByIP(const sf::IpAddress ip);
@@ -141,6 +145,7 @@ public:
     bool ShouldBlockConnection(const sf::IpAddress &ip);
     void DisconnectPlayer(Client &client, const std::string reason);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
+    void StartCountdown() { StartCountdown(this->countdownPreCommands, this->countdownPostCommands, this->countdownDuration); }
     void SetAccept(bool players, bool accept);
     void SetAlwaysListClients(bool alwaysList);
 
@@ -149,13 +154,21 @@ public:
     void Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short udp_port);
 
     void BanClientIP(sf::IpAddress ip);
-    void ServerMessage(const char *msg);
+
+    void ServerMessage(std::string msg);
+    void ServerMessage(sf::Uint32 playerID, std::string msg);
+    void SendPacket(sf::Packet& packet);
+    void SendPacket(sf::Uint32 playerID, sf::Packet& packet);
+    void SendPacketExclude(sf::Uint32 playerID, sf::Packet& packet);
+    void SendPacketMap(std::string mapName, sf::Packet& packet);
+    void SendPacketMapExclude(std::string mapName, sf::Uint32 playerID, sf::Packet& packet);
 
     void ListClients();
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
     void SetAdminUsername(std::string username);
     void SetAdminPassword(std::string password);
 
+    void Log(const std::string& message);
     void UI_EVENT(std::string event);
     int RegisterEventCallback(std::string type, std::function<void()> callback);
     void UnregisterEventCallback(int id) { uiEventCallbacks.erase(id); }

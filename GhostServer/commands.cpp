@@ -18,9 +18,6 @@
 
 volatile int g_should_stop = 0;
 
-static char *g_entered_pre = strdup("");
-static char *g_entered_post = strdup("");
-
 std::string ssprintf(const char *fmt, ...) {
 	va_list ap1, ap2;
 	va_start(ap1, fmt);
@@ -192,14 +189,14 @@ void handle_cmd(NetworkManager *network, char *line) {
                 return;
             }
             std::string pre_cmds = argsR[1];
-            g_entered_pre = strdup(pre_cmds.c_str());
+            network->countdownPreCommands = pre_cmds;
         } else if (subcmd == "post") {
             if (args.size() < 3) {
                 LINE("Usage: countdown post <post-cmds>");
                 return;
             }
             std::string post_cmds = argsR[1];
-            g_entered_post = strdup(post_cmds.c_str());
+            network->countdownPostCommands = post_cmds;
         } else if (subcmd == "start") {
             if (args.size() != 3) {
                 LINE("Usage: countdown start <duration>");
@@ -213,8 +210,9 @@ void handle_cmd(NetworkManager *network, char *line) {
                 LINE("Duration too long (max 60)");
                 return;
             }
+            network->countdownDuration = duration;
             network->ScheduleServerThread([=]() {
-                network->StartCountdown(std::string(g_entered_pre), std::string(g_entered_post), duration);
+                network->StartCountdown();
             });
         } else {
             LINE("Usage: countdown <pre|post|start> [pre-cmds|post-cmds|duration]");
@@ -417,7 +415,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         }
         std::string message = argsR[0];
         network->ScheduleServerThread([=]() {
-            network->ServerMessage(message.c_str());
+            network->ServerMessage(message);
         });
         return;
     }
