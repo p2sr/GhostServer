@@ -623,11 +623,13 @@ void NetworkManager::RunServer()
     while (this->isRunning) try {
         auto now = std::chrono::steady_clock::now();
         if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE_MS)) {
+            GHOST_LOG("Heartbeat");
             this->DoHeartbeats();
             lastHeartbeat = now;
         }
 
         if (now > lastHeartbeatUdp + std::chrono::milliseconds(HEARTBEAT_RATE_UDP_MS)) {
+            GHOST_LOG("UDP heartbeat");
             for (auto &client : this->clients) {
                 if (!client.TCP_only) {
                     sf::Packet packet;
@@ -639,6 +641,7 @@ void NetworkManager::RunServer()
         }
 
         if (now > lastUpdate + std::chrono::milliseconds(UPDATE_RATE_MS)) {
+            // too frequent to log, it'll spam
             // Send bulk update packet
             sf::Packet packet;
             packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
@@ -656,6 +659,7 @@ void NetworkManager::RunServer()
         }
 
         if (now > lastTicker + std::chrono::milliseconds(tickerIntervalMs)) {
+            GHOST_LOG("Ticker");
             if (clients.size() > 0) {
                 if (!tickerStrings.empty()) {
                     tickerIndex %= tickerStrings.size();
