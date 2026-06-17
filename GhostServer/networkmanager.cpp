@@ -651,16 +651,15 @@ void NetworkManager::RunServer()
 
         if (now > lastTicker + std::chrono::milliseconds(tickerIntervalMs)) {
             if (clients.size() > 0) {
-                tickerIndex %= tickerStrings.size();
-                if (!tickerStrings.empty() && tickerIndex < tickerStrings.size()) {
+                if (!tickerStrings.empty()) {
+                    tickerIndex %= tickerStrings.size();
                     for (auto &client : this->clients) {
                         if (client.tickerSub) {
                             ServerMessage(client.ID, tickerStrings[tickerIndex]);
                         }
                     }
-                    tickerIndex++;
+                    tickerIndex = (tickerIndex + 1) % tickerStrings.size();
                 }
-                tickerIndex %= tickerStrings.size();
             }
             lastTicker = now;
         }
