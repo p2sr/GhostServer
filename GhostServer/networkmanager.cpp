@@ -338,6 +338,11 @@ void NetworkManager::CheckConnection()
         }
     }
 
+    if (name.empty()) {
+        GHOST_LOG("Refused connection from " + client.IP.toString() + ":" + std::to_string(port) + " - no name provided");
+        return;
+    }
+
     client.ID = this->lastID++;
     client.IP = client.tcpSocket->getRemoteAddress();
     client.port = port;
