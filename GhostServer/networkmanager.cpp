@@ -105,6 +105,8 @@ NetworkManager::NetworkManager(const char *logfile)
     , lastID(1) // 0 == server
 {
     g_logFile = logfile ? fopen(logfile, "w") : NULL;
+    SetAdminUsername(std::getenv("GHOST_ADMIN_USERNAME") ? std::getenv("GHOST_ADMIN_USERNAME") : "");
+    SetAdminPassword(std::getenv("GHOST_ADMIN_PASSWORD") ? std::getenv("GHOST_ADMIN_PASSWORD") : "");
 }
 
 NetworkManager::~NetworkManager() {
@@ -408,6 +410,14 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::Ip
     } while (status == sf::Socket::Done);
 }
 
+#define SEND_REPLY(packet) \
+    for (auto& other : this->clients) { \
+        if (other.ID == ID) { \
+            other.tcpSocket->send(packet); \
+            break; \
+        } \
+    }
+
 #define SEND_TO_OTHERS(packet) \
     for (auto& other : this->clients) { \
         if (other.ID != ID) { \
@@ -479,6 +489,26 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     case HEADER::MESSAGE: {
         std::string message;
         packet >> message;
+        if (message.length() >= 7 && message.substr(0, 7) == "!admin ") {
+            sf::Packet reply;
+            reply << HEADER::MESSAGE << sf::Uint32(0);
+            if (!this->adminUsername.empty() && !this->adminPassword.empty()) {
+                if (client->name == this->adminUsername) {
+                    message = message.substr(7);
+                    if (message.length() > this->adminPassword.length() + 1 && message.substr(0, this->adminPassword.length() + 1) == this->adminPassword + " ") {
+                        std::string cmd = message.substr(this->adminPassword.length() + 1);
+                        GHOST_LOG("[admin] cmd: " + cmd);
+                        handle_cmd(this, const_cast<char*>(cmd.c_str()));
+                        reply << "Executed admin command: '" + cmd + "'";
+                        SEND_REPLY(reply);
+                        return;
+                    } else GHOST_LOG("[admin] reject: incorrect password");
+                } else GHOST_LOG("[admin] reject: username '" + client->name + "' is not admin");
+            } else GHOST_LOG("[admin] reject: no admin credentials set");
+            reply << "Invalid admin credentials.";
+            SEND_REPLY(reply);
+            return;
+        }
         GHOST_LOG("[message] " + client->name + ": " + message);
         SEND_TO_OTHERS(packet);
         break;
@@ -675,6 +705,13 @@ bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
     return index != whitelist.end();
 }
 
+void NetworkManager::SetAdminUsername(std::string username) {
+    this->adminUsername = username;
+}
+
+void NetworkManager::SetAdminPassword(std::string password) {
+    this->adminPassword = password;
+}
 
 void NetworkManager::UI_EVENT(std::string event) {
     for (auto item : uiEventCallbacks) {

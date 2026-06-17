@@ -100,6 +100,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         LINE("  refuse                stop accepting connections");
         LINE("  say                   send a message to all clients");
         LINE("  whitelist             manage the whitelist");
+        LINE("  admin                 set admin credentials");
         return;
     }
 
@@ -511,6 +512,29 @@ void handle_cmd(NetworkManager *network, char *line) {
             });
         } else {
             LINE("Usage: whitelist <on|off|add|remove|list> [name|ip] [value]");
+        }
+        return;
+    }
+
+    if (cmd == "admin") {
+        if (args.size() != 3) {
+            LINE("Usage: admin <username|password> <value>");
+            return;
+        }
+        std::string subcmd = argsL[1];
+        std::string value = args[2];
+        if (subcmd == "username") {
+            network->ScheduleServerThread([=]() {
+                network->SetAdminUsername(value);
+            });
+            LINE("Admin username set to '%s'", value.c_str());
+        } else if (subcmd == "password") {
+            network->ScheduleServerThread([=]() {
+                network->SetAdminPassword(value);
+            });
+            LINE("Admin password set");
+        } else {
+            LINE("Usage: admin <username|password> <value>");
         }
         return;
     }

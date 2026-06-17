@@ -110,6 +110,9 @@ private:
 
     void DoHeartbeats();
 
+    std::string adminUsername;
+    std::string adminPassword;
+
 public:
     NetworkManager(const char *logfile = "ghost_log.log");
     ~NetworkManager();
@@ -149,6 +152,8 @@ public:
     void ServerMessage(const char *msg);
 
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);
+    void SetAdminUsername(std::string username);
+    void SetAdminPassword(std::string password);
 
     void UI_EVENT(std::string event);
     int RegisterEventCallback(std::string type, std::function<void()> callback);
