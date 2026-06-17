@@ -127,16 +127,16 @@ public:
 
     void ScheduleServerThread(std::function<void()> func);
 
-    std::vector<Client *> GetPlayerByName(std::string name);
-    Client* GetClientByID(sf::Uint32 ID);
-    std::vector<Client *> GetClientByIP(sf::IpAddress ip);
+    std::vector<Client *> GetPlayerByName(const std::string name);
+    Client* GetClientByID(const sf::Uint32 ID);
+    std::vector<Client *> GetClientByIP(const sf::IpAddress ip);
 
     bool StartServer(const int port);
     void StopServer();
     void RunServer();
 
     bool ShouldBlockConnection(const sf::IpAddress &ip);
-    void DisconnectPlayer(Client &client, const char *reason);
+    void DisconnectPlayer(Client &client, const std::string reason);
     void StartCountdown(const std::string preCommands, const std::string postCommands, const int duration);
     void SetAccept(bool players, bool accept);
     void SetAlwaysListClients(bool alwaysList);

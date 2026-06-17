@@ -120,7 +120,7 @@ void NetworkManager::ScheduleServerThread(std::function<void()> func) {
     g_server_queue_mutex.unlock();
 }
 
-std::vector<Client *> NetworkManager::GetPlayerByName(std::string name)
+std::vector<Client *> NetworkManager::GetPlayerByName(const std::string name)
 {
     std::vector<Client *> matches;
     for (auto &client : this->clients) {
@@ -132,7 +132,7 @@ std::vector<Client *> NetworkManager::GetPlayerByName(std::string name)
     return matches;
 }
 
-Client* NetworkManager::GetClientByID(sf::Uint32 ID)
+Client* NetworkManager::GetClientByID(const sf::Uint32 ID)
 {
     for (auto& client : this->clients) {
         if (client.ID == ID) {
@@ -143,7 +143,7 @@ Client* NetworkManager::GetClientByID(sf::Uint32 ID)
     return nullptr;
 }
 
-std::vector<Client *> NetworkManager::GetClientByIP(sf::IpAddress ip) {
+std::vector<Client *> NetworkManager::GetClientByIP(const sf::IpAddress ip) {
     std::vector<Client *> clients;
     for (auto& client : this->clients) {
         if (client.IP == ip) {
@@ -214,7 +214,7 @@ void NetworkManager::StopServer()
     GHOST_LOG("Server stopped!");
 }
 
-void NetworkManager::DisconnectPlayer(Client& c, const char *reason)
+void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
 {
     sf::Packet packet;
     packet << HEADER::DISCONNECT << c.ID;
