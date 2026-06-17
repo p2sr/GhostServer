@@ -25,6 +25,7 @@ Server for the Ghost feature in [SourceAutoRecord](https://github.com/p2sr/Sourc
 |-|-|
 |`GHOST_ADMIN_USERNAME`|Set the name of the admin user. If unset, admin authentication is disabled. This can be changed using the `admin` admin command.|
 |`GHOST_ADMIN_PASSWORD`|Set the password for the admin user. If unset, admin authentication is disabled. This can be changed using the `admin` admin command.|
+|`GHOST_TICKER_MESSAGES`|Set the initial ticker messages, separated by `\|`. If unset, no ticker messages are sent. This can be changed using the `ticker` admin command.|
 
 ## Contributing
 

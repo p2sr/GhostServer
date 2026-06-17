@@ -102,6 +102,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         LINE("  say                   send a message to all clients");
         LINE("  whitelist             manage the whitelist");
         LINE("  admin                 set admin credentials");
+        LINE("  ticker                manage periodic server messages");
         return;
     }
 
@@ -541,6 +542,73 @@ void handle_cmd(NetworkManager *network, char *line) {
         return;
     }
 
+    if (cmd == "ticker") {
+        if (args.size() < 2) {
+            LINE("Usage: ticker <add|remove|clear|list|interval> [message/index/seconds]");
+            return;
+        }
+
+        std::string subcmd = argsL[1];
+        std::string message = argsR[1];
+        size_t index = 0;
+        double interval = 0.f;
+        if (args.size() >= 3) {
+            index = atoi(args[2].c_str());
+            interval = atof(args[2].c_str());
+        }
+
+        if (subcmd == "add") {
+            network->ScheduleServerThread([=]() {
+                network->tickerStrings.push_back(message);
+            });
+            LINE("Added ticker message: '%s'", message.c_str());
+        } else if (subcmd == "remove") {
+            network->ScheduleServerThread([=]() {
+                if (args.size() != 3) {
+                    LINE("Usage: ticker remove <index>");
+                    return;
+                }
+                if (index >= network->tickerStrings.size() || index < 0) {
+                    LINE("Invalid index");
+                    return;
+                }
+                network->tickerStrings.erase(network->tickerStrings.begin() + index);
+            });
+            LINE("Removed ticker message at index %d", (int)index);
+        } else if (subcmd == "clear") {
+            network->ScheduleServerThread([=]() {
+                network->tickerStrings.clear();
+            });
+            LINE("Cleared all ticker messages");
+        } else if (subcmd == "list") {
+            network->ScheduleServerThread([=]() {
+                if (network->tickerStrings.empty()) {
+                    LINE("No ticker messages");
+                } else {
+                    LINE("Ticker messages:");
+                    for (size_t i = 0; i < network->tickerStrings.size(); i++) {
+                        LINE("  %d: '%s'", (int)i, network->tickerStrings[i].c_str());
+                    }
+                }
+            });
+        } else if (subcmd == "interval") {
+            if (args.size() != 3) {
+                LINE("Usage: ticker interval <seconds>");
+                return;
+            }
+            if (interval <= 0) {
+                LINE("Invalid interval");
+                return;
+            }
+            network->ScheduleServerThread([=]() {
+                network->tickerIntervalMs = interval * 1000.f;
+            });
+            LINE("Ticker interval set to %f seconds", interval);
+        } else {
+            LINE("Usage: ticker <add|remove|clear|list|interval> [message/index/seconds]");
+        }
+        return;
+    }
     LINE("Unknown command: '%s'", line);
     LINE("Enter 'help' for a list of commands.");
 }

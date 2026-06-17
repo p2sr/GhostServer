@@ -46,6 +46,7 @@ static void file_log(std::string str) {
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeat;
 static std::chrono::time_point<std::chrono::steady_clock> lastHeartbeatUdp;
 static std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
+static std::chrono::time_point<std::chrono::steady_clock> lastTicker;
 
 // DataGhost
 
@@ -109,6 +110,20 @@ NetworkManager::NetworkManager(const char *logfile)
     g_logFile = logfile ? fopen(logfile, "w") : NULL;
     SetAdminUsername(std::getenv("GHOST_ADMIN_USERNAME") ? std::getenv("GHOST_ADMIN_USERNAME") : "");
     SetAdminPassword(std::getenv("GHOST_ADMIN_PASSWORD") ? std::getenv("GHOST_ADMIN_PASSWORD") : "");
+    if (std::getenv("GHOST_TICKER_MESSAGES")) {
+        std::string tickerEnv = std::getenv("GHOST_TICKER_MESSAGES");
+        size_t pos = 0;
+        while ((pos = tickerEnv.find('|')) != std::string::npos) {
+            std::string msg = tickerEnv.substr(0, pos);
+            if (!msg.empty()) {
+                this->tickerStrings.push_back(msg);
+            }
+            tickerEnv.erase(0, pos + 1);
+        }
+        if (!tickerEnv.empty()) {
+            this->tickerStrings.push_back(tickerEnv);
+        }
+    }
 }
 
 NetworkManager::~NetworkManager() {
@@ -454,7 +469,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     case HEADER::PING: {
         sf::Packet ping_packet;
         ping_packet << HEADER::PING;
-        client->tcpSocket->send(ping_packet);
+        SendPacket(ID, ping_packet);
         break;
     }
     case HEADER::DISCONNECT: {
@@ -657,6 +672,18 @@ void NetworkManager::RunServer()
                 }
             }
             lastUpdate = now;
+        }
+
+        if (now > lastTicker + std::chrono::milliseconds(tickerIntervalMs)) {
+            if (clients.size() > 0) {
+                tickerIndex %= tickerStrings.size();
+                if (!tickerStrings.empty() && tickerIndex < tickerStrings.size()) {
+                    ServerMessage(tickerStrings[tickerIndex]);
+                    tickerIndex++;
+                }
+                tickerIndex %= tickerStrings.size();
+            }
+            lastTicker = now;
         }
 
         // UDP

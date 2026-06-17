@@ -127,6 +127,10 @@ public:
     bool whitelistEnabled = false;
     std::set<WhitelistEntry> whitelist;
     std::set<sf::IpAddress> bannedIps;
+    
+    std::vector<std::string> tickerStrings;
+    size_t tickerIndex = 0;
+    size_t tickerIntervalMs = 300000; // 5 minutes
     std::string countdownPreCommands = "";
     std::string countdownPostCommands = "";
     int countdownDuration = 3;
