@@ -48,6 +48,10 @@ std::string ssprintf(const char *fmt, ...) {
 
 void handle_cmd(NetworkManager *network, char *line) {
     std::string _line(line);
+    size_t first = _line.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return;
+    size_t last = _line.find_last_not_of(" \t\r\n");
+    _line = _line.substr(first, last - first + 1);
     std::vector<std::string> args;
     std::vector<std::string> argsL; // lower
     std::vector<std::string> argsR; // remaining
