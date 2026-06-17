@@ -114,6 +114,12 @@ NetworkManager::NetworkManager(const char *logfile)
     if (std::getenv("GHOST_TICKER_MESSAGES")) {
         std::string tickerEnv = std::getenv("GHOST_TICKER_MESSAGES");
         size_t pos = 0;
+        while ((pos = tickerEnv.find("\\", pos)) != std::string::npos) {
+            std::string character = tickerEnv.substr(pos + 1, 1);
+            tickerEnv.replace(pos, 2, character == "n" ? "\n" : character);
+            pos++;
+        }
+        pos = 0;
         while ((pos = tickerEnv.find('|')) != std::string::npos) {
             std::string msg = tickerEnv.substr(0, pos);
             if (!msg.empty()) {
