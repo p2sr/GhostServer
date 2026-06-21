@@ -190,19 +190,19 @@ std::vector<Client *> NetworkManager::GetClientByIP(const sf::IpAddress ip) {
 bool NetworkManager::StartServer(const int port)
 {
     if (this->isRunning) {
-        GHOST_LOG("Server is already running!");
+        this->Log("Server is already running!");
         return false;
     }
 
     if (this->udpSocket.bind(port) != sf::Socket::Done) {
-        GHOST_LOG("Failed to bind UDP socket to port " + std::to_string(port) + ".");
+        this->Log("Failed to bind UDP socket to port " + std::to_string(port) + ".");
         this->udpSocket.unbind();
         this->listener.close();
         return false;
     }
 
     if (this->listener.listen(port) != sf::Socket::Done) {
-        GHOST_LOG("Failed to bind listener to port " + std::to_string(port) + ".");
+        this->Log("Failed to bind listener to port " + std::to_string(port) + ".");
         this->udpSocket.unbind();
         this->listener.close();
         return false;
@@ -218,8 +218,8 @@ bool NetworkManager::StartServer(const int port)
 
     UI_EVENT("server_start");
     UI_EVENT("client_change");
-    GHOST_LOG("Server started on " + this->serverIP.toString() + " (public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
-    GHOST_LOG("Enter 'help' for a list of commands.");
+    this->Log("Server started on " + this->serverIP.toString() + " (public IP: " + sf::IpAddress::getPublicAddress().toString() + ") on port " + std::to_string(this->serverPort));
+    this->Log("Enter 'help' for a list of commands.");
 
     return true;
 }
@@ -245,7 +245,7 @@ void NetworkManager::StopServer()
 
     UI_EVENT("client_change");
     UI_EVENT("server_stop");
-    GHOST_LOG("Server stopped!");
+    this->Log("Server stopped!");
 }
 
 void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
@@ -257,7 +257,7 @@ void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
     if (it == this->clients.end()) return;
 
     Client& client = *it;
-    GHOST_LOG("Disconnect(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
+    this->Log("Disconnect(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
     this->selector.remove(*client.tcpSocket);
     client.tcpSocket->disconnect();
 
@@ -269,16 +269,16 @@ void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
 void NetworkManager::StartCountdown(const std::string preCommands, const std::string postCommands, const int duration)
 {
     if (!this->isRunning) {
-        GHOST_LOG("Server is not running!");
+        this->Log("Server is not running!");
         return;
     }
     if (postCommands.empty()) {
-        GHOST_LOG("Countdown to nothing!");
+        this->Log("Countdown to nothing!");
         return;
     }
-    GHOST_LOG("Countdown starting: " + std::to_string(duration) + " seconds");
-    GHOST_LOG("Pre-command: " + preCommands);
-    GHOST_LOG("Post-command: " + postCommands);
+    this->Log("Countdown starting: " + std::to_string(duration) + " seconds");
+    this->Log("Pre-command: " + preCommands);
+    this->Log("Post-command: " + postCommands);
     sf::Packet packet;
     packet << HEADER::COUNTDOWN << sf::Uint32(0) << sf::Uint8(0) << sf::Uint32(duration) << preCommands << postCommands;
     SendPacket(packet);
@@ -302,7 +302,7 @@ void NetworkManager::SetAccept(bool players, bool allow)
     }
     if (!changed) return;
     UI_EVENT("accept_refuse");
-    GHOST_LOG(std::string("Now ") + (allow ? "accepting" : "refusing") + " connections from " + (players ? "players" : "spectators"));
+    this->Log(std::string("Now ") + (allow ? "accepting" : "refusing") + " connections from " + (players ? "players" : "spectators"));
 
 }
 
@@ -311,7 +311,7 @@ void NetworkManager::SetAlwaysListClients(bool alwaysList) {
     this->alwaysListClients = alwaysList;
     if (!changed) return;
     UI_EVENT("client_change");
-    GHOST_LOG(std::string("Now ") + (alwaysList ? "" : "not ") + "listing clients on connect/disconnect");
+    this->Log(std::string("Now ") + (alwaysList ? "" : "not ") + "listing clients on connect/disconnect");
 }
 
 bool NetworkManager::ShouldBlockConnection(const sf::IpAddress& ip)
@@ -337,20 +337,20 @@ void NetworkManager::CheckConnection()
     client.tcpSocket = std::make_unique<sf::TcpSocket>();
 
     if (this->listener.accept(*client.tcpSocket) != sf::Socket::Done) {
-        GHOST_LOG("Failed to accept connection");
+        this->Log("Failed to accept connection");
         return;
     }
     client.IP = client.tcpSocket->getRemoteAddress();
     
     if (this->ShouldBlockConnection(client.IP)) {
-        GHOST_LOG("Refused connection from " + client.IP.toString() + " - blocked");
+        this->Log("Refused connection from " + client.IP.toString() + " - blocked");
         return;
     }
 
     sf::SocketSelector conn_selector;
     conn_selector.add(*client.tcpSocket);
     if (!conn_selector.wait(sf::milliseconds(CONNECT_TIMEOUT_MS))) {
-        GHOST_LOG("Connection timeout from " + client.IP.toString());
+        this->Log("Connection timeout from " + client.IP.toString());
         return;
     }
     
@@ -370,17 +370,17 @@ void NetworkManager::CheckConnection()
     connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col >> spectator;
 
     if (name.empty()) {
-        GHOST_LOG("Refused connection from " + client.IP.toString() + ":" + std::to_string(port) + " - no name provided");
+        this->Log("Refused connection from " + client.IP.toString() + ":" + std::to_string(port) + " - no name provided");
         return;
     }
 
     if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
-        GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not accepting this type");
+        this->Log("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not accepting this type");
         return;
     }
 
     if (!IsOnWhitelist(name, client.IP)) {
-        GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not on whitelist");
+        this->Log("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not on whitelist");
         return;
     }
 
@@ -410,7 +410,7 @@ void NetworkManager::CheckConnection()
 
     auto status = client.tcpSocket->send(packet_new_client);
     if (status != sf::Socket::Status::Done) {
-        GHOST_LOG("Connection failed from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - status " + std::to_string(status));
+        this->Log("Connection failed from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - status " + std::to_string(status));
         this->selector.remove(*client.tcpSocket);
         client.tcpSocket->disconnect();
         return;
@@ -420,7 +420,7 @@ void NetworkManager::CheckConnection()
     packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color << client.spectator;
     SendPacket(packet_notify_all);
 
-    GHOST_LOG("Connection(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    this->Log("Connection(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 
@@ -443,7 +443,7 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::Ip
         }
     } while (status == sf::Socket::Done && packets < 1000);
     if (packets >= 1000) {
-        GHOST_LOG("Received over 1000 UDP packets in one frame, some may have been dropped");
+        this->Log("Received over 1000 UDP packets in one frame, some may have been dropped");
     }
 }
 
@@ -486,7 +486,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
         packet >> map;
         client->currentMap = map;
         UI_EVENT("client_change");
-        GHOST_LOG(client->name + " is now on " + map);
+        this->Log(client->name + " is now on " + map);
         SendPacketExclude(ID, packet);
         break;
     }
@@ -502,7 +502,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     case HEADER::MESSAGE: {
         std::string message;
         packet >> message;
-        GHOST_LOG("[message] " + client->name + ": " + message);
+        this->Log("[message] " + client->name + ": " + message);
         if (!handle_chat_cmd(this, ID, message)) {
             SendPacketExclude(ID, packet);
         }
@@ -567,11 +567,11 @@ void NetworkManager::BanClientIP(sf::IpAddress ip) {
     }
     if (this->bannedIps.find(ip) != this->bannedIps.end()) return;
     this->bannedIps.insert(ip);
-    GHOST_LOG("Banned IP " + ip.toString());
+    this->Log("Banned IP " + ip.toString());
 }
 
 void NetworkManager::ServerMessage(std::string msg) {
-    GHOST_LOG(std::string("[server message] ") + msg);
+    this->Log(std::string("[server message] ") + msg);
     sf::Packet packet;
     packet << HEADER::MESSAGE << sf::Uint32(0) << msg;
     SendPacket(packet);
@@ -585,7 +585,7 @@ void NetworkManager::ServerMessage(sf::Uint32 playerID, std::string msg) {
 sf::Socket::Status NetworkManager::SendPacket(Client& client, sf::Packet& packet) {
     auto status = client.tcpSocket->send(packet);
     if (status != sf::Socket::Status::Done) {
-        GHOST_LOG("Failed to send packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
+        this->Log("Failed to send packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
     }
     return status;
 }
@@ -626,7 +626,7 @@ void NetworkManager::SendPacketMapExclude(std::string mapName, sf::Uint32 player
 void NetworkManager::SendUDPPacket(Client& client, sf::Packet& packet) {
     auto status = udpSocket.send(packet, client.IP, client.port);
     if (status != sf::Socket::Status::Done) {
-        GHOST_LOG("Failed to send UDP packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
+        this->Log("Failed to send UDP packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
     }
 }
 
@@ -639,13 +639,13 @@ void NetworkManager::RunServer()
     while (this->isRunning) try {
         auto now = std::chrono::steady_clock::now();
         if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE_MS)) {
-            GHOST_LOG("Heartbeat");
+            this->Log("Heartbeat");
             this->DoHeartbeats();
             lastHeartbeat = now;
         }
 
         if (now > lastHeartbeatUdp + std::chrono::milliseconds(HEARTBEAT_RATE_UDP_MS)) {
-            GHOST_LOG("UDP heartbeat");
+            this->Log("UDP heartbeat");
             for (auto &client : this->clients) {
                 if (!client.TCP_only) {
                     sf::Packet packet;
@@ -675,7 +675,7 @@ void NetworkManager::RunServer()
         }
 
         if (now > lastTicker + std::chrono::milliseconds(tickerIntervalMs)) {
-            GHOST_LOG("Ticker");
+            this->Log("Ticker");
             if (clients.size() > 0) {
                 if (!tickerStrings.empty()) {
                     tickerIndex %= tickerStrings.size();
@@ -723,7 +723,7 @@ void NetworkManager::RunServer()
         g_server_queue.clear();
         g_server_queue_mutex.unlock();
     } catch (std::exception &e) {
-        GHOST_LOG(std::string("Exception in server loop: ") + e.what());
+        this->Log(std::string("Exception in server loop: ") + e.what());
     }
 
     this->StopServer();
@@ -754,11 +754,11 @@ void NetworkManager::DoHeartbeats()
 
 void NetworkManager::ListClients() {
     if (this->clients.empty()) {
-        GHOST_LOG("No clients");
+        this->Log("No clients");
     } else {
-        GHOST_LOG("Clients:");
+        this->Log("Clients:");
         for (auto &cl : this->clients) {
-            GHOST_LOG(ssprintf("  %-3d '%s' (%s) @ %s:%d @ '%s'",
+            this->Log(ssprintf("  %-3d '%s' (%s) @ %s:%d @ '%s'",
                 cl.ID,
                 cl.name.c_str(),
                 cl.spectator ? "spectator" : "player",
