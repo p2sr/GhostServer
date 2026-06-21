@@ -430,6 +430,7 @@ void NetworkManager::CheckConnection()
 
 void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::IpAddress, unsigned short>>& buffer)
 {
+    size_t packets = 0;
     sf::Socket::Status status;
     do {
         sf::Packet packet;
@@ -438,8 +439,12 @@ void NetworkManager::ReceiveUDPUpdates(std::vector<std::tuple<sf::Packet, sf::Ip
         status = this->udpSocket.receive(packet, ip, port);
         if (status == sf::Socket::Done) {
             buffer.push_back({ packet, ip, port });
+            packets++;
         }
-    } while (status == sf::Socket::Done);
+    } while (status == sf::Socket::Done && packets < 1000);
+    if (packets >= 1000) {
+        GHOST_LOG("Received over 1000 UDP packets in one frame, some may have been dropped");
+    }
 }
 
 void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short udp_port)
