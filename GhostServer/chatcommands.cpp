@@ -198,13 +198,11 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
             }
             std::string command = argsR[1];
             network->Log("[admin] cmd: " + command);
+            bool sub = client->logSub;
+            client->logSub = true;
+            handle_cmd(network, const_cast<char*>(command.c_str()));
             network->ScheduleServerThread([=]() {
-                bool sub = client->logSub;
-                client->logSub = true;
-                handle_cmd(network, const_cast<char*>(command.c_str()));
-                network->ScheduleServerThread([=]() {
-                    client->logSub = sub;
-                });
+                client->logSub = sub;
             });
             return true;
         } else if (subcmd == "logs") {
