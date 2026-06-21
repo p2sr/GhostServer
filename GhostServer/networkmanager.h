@@ -139,6 +139,8 @@ public:
     std::string countdownPostCommands = "";
     int countdownDuration = 3;
 
+    uint32_t logChannels = 0; // bitfield. 1 = schedule, 2 = heartbeat, 4 = update
+
     void ScheduleServerThread(std::function<void()> func);
 
     const std::vector<Client *> GetClients();

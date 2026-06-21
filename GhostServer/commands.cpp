@@ -97,6 +97,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         LINE("  whitelist             manage the whitelist");
         LINE("  admin                 set admin credentials");
         LINE("  ticker                manage periodic server messages");
+        LINE("  log                   manage logging options");
         return;
     }
 
@@ -600,6 +601,41 @@ void handle_cmd(NetworkManager *network, char *line) {
             LINE("Ticker interval set to %f seconds", interval);
         } else {
             LINE("Usage: ticker <add|remove|clear|list|interval> [message/index/seconds]");
+        }
+        return;
+    }
+
+    if (cmd == "log") {
+        if (args.size() != 2) {
+            LINE("Usage: log <channel>");
+            LINE("Channels:");
+            LINE("  schedule    log scheduled tasks");
+            LINE("  heartbeat   log heartbeats (2/s spam)");
+            LINE("  update      log updates (40/s spam)");
+            return;
+        }
+        std::string subcmd = argsL[1];
+        if (subcmd == "schedule") {
+            network->ScheduleServerThread([=]() {
+                network->logChannels ^= 0b001;
+                LINE("Toggled schedule logging %s", (network->logChannels & 0b001) ? "on" : "off");
+            });
+        } else if (subcmd == "heartbeat") {
+            network->ScheduleServerThread([=]() {
+                network->logChannels ^= 0b010;
+                LINE("Toggled heartbeat logging %s", (network->logChannels & 0b010) ? "on" : "off");
+            });
+        } else if (subcmd == "update") {
+            network->ScheduleServerThread([=]() {
+                network->logChannels ^= 0b100;
+                LINE("Toggled update logging %s", (network->logChannels & 0b100) ? "on" : "off");
+            });
+        } else {
+            LINE("Usage: log <channel>");
+            LINE("Channels:");
+            LINE("  schedule    log scheduled tasks");
+            LINE("  heartbeat   log heartbeats (2/s spam)");
+            LINE("  update      log updates (40/s spam)");
         }
         return;
     }

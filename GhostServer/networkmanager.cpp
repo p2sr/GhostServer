@@ -639,11 +639,20 @@ void NetworkManager::RunServer()
     while (this->isRunning) try {
         auto now = std::chrono::steady_clock::now();
         if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE_MS)) {
+            if (logChannels & 0b10) {
+                this->Log(">>> HEARTBEAT >>>");
+            }
             this->DoHeartbeats();
+            if (logChannels & 0b10) {
+                this->Log("<<< HEARTBEAT <<<");
+            }
             lastHeartbeat = now;
         }
 
         if (now > lastHeartbeatUdp + std::chrono::milliseconds(HEARTBEAT_RATE_UDP_MS)) {
+            if (logChannels & 0b10) {
+                this->Log(">>> HEARTBEAT UDP >>>");
+            }
             for (auto &client : this->clients) {
                 if (!client.TCP_only) {
                     sf::Packet packet;
@@ -651,10 +660,16 @@ void NetworkManager::RunServer()
                     SendUDPPacket(client, packet);
                 }
             }
+            if (logChannels & 0b10) {
+                this->Log("<<< HEARTBEAT UDP <<<");
+            }
             lastHeartbeatUdp = now;
         }
 
         if (now > lastUpdate + std::chrono::milliseconds(UPDATE_RATE_MS)) {
+            if (logChannels & 0b100) {
+                this->Log(">>> UPDATE >>>");
+            }
             // too frequent to log, it'll spam
             // Send bulk update packet
             sf::Packet packet;
@@ -669,6 +684,9 @@ void NetworkManager::RunServer()
                     SendUDPPacket(client, packet);
                 }
             }
+            if (logChannels & 0b100) {
+                this->Log("<<< UPDATE <<<");
+            }
             lastUpdate = now;
         }
 
@@ -676,6 +694,7 @@ void NetworkManager::RunServer()
             if (clients.size() > 0) {
                 if (!tickerStrings.empty()) {
                     tickerIndex %= tickerStrings.size();
+                    this->Log(std::string("[ticker] ") + tickerStrings[tickerIndex]);
                     for (auto &client : this->clients) {
                         if (client.tickerSub) {
                             ServerMessage(client.ID, tickerStrings[tickerIndex]);
@@ -714,8 +733,14 @@ void NetworkManager::RunServer()
         }
 
         g_server_queue_mutex.lock();
+        if (!g_server_queue.empty()) {
+            if (logChannels & 0b1) this->Log("Running " + std::to_string(g_server_queue.size()) + " scheduled server tasks...");
+        }
         for (auto &f : g_server_queue) {
             f();
+        }
+        if (!g_server_queue.empty()) {
+            if (logChannels & 0b1) this->Log("Finished running scheduled server tasks.");
         }
         g_server_queue.clear();
         g_server_queue_mutex.unlock();
