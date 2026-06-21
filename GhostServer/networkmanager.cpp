@@ -639,13 +639,11 @@ void NetworkManager::RunServer()
     while (this->isRunning) try {
         auto now = std::chrono::steady_clock::now();
         if (now > lastHeartbeat + std::chrono::milliseconds(HEARTBEAT_RATE_MS)) {
-            this->Log("Heartbeat");
             this->DoHeartbeats();
             lastHeartbeat = now;
         }
 
         if (now > lastHeartbeatUdp + std::chrono::milliseconds(HEARTBEAT_RATE_UDP_MS)) {
-            this->Log("UDP heartbeat");
             for (auto &client : this->clients) {
                 if (!client.TCP_only) {
                     sf::Packet packet;
@@ -675,7 +673,6 @@ void NetworkManager::RunServer()
         }
 
         if (now > lastTicker + std::chrono::milliseconds(tickerIntervalMs)) {
-            this->Log("Ticker");
             if (clients.size() > 0) {
                 if (!tickerStrings.empty()) {
                     tickerIndex %= tickerStrings.size();

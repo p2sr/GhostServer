@@ -603,6 +603,7 @@ void handle_cmd(NetworkManager *network, char *line) {
         }
         return;
     }
+
     LINE("Unknown command: '%s'", line);
     LINE("Enter 'help' for a list of commands.");
 }
