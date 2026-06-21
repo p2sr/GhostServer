@@ -744,7 +744,7 @@ void NetworkManager::DoHeartbeats()
             client.returnedHeartbeat = false;
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
-            if (client.tcpSocket->send(packet) == sf::Socket::Status::Disconnected) {
+            if (client.tcpSocket->send(packet) != sf::Socket::Status::Done) {
                 this->DisconnectPlayer(client, "socket died");
                 --i;
             }

@@ -78,7 +78,9 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
         }
         bool ready = !client->ready;
         MSG_ALL("%s is %sready!", client->name.c_str(), ready ? "" : "not ");
-        network->SetReady(playerID, ready);
+        network->ScheduleServerThread([=]() {
+            network->SetReady(playerID, ready);
+        });
         return true;
     }
 
@@ -122,13 +124,19 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
 
     if (cmd == "ticker") {
         if (args.size() == 1) {
-            client->tickerSub = !client->tickerSub;
+            network->ScheduleServerThread([=]() {
+                client->tickerSub = !client->tickerSub;
+            });
         } else if (args.size() == 2) {
             std::string subcmd = argsL[1];
             if (subcmd == "on") {
-                client->tickerSub = true;
+                network->ScheduleServerThread([=]() {
+                    client->tickerSub = true;
+                });
             } else if (subcmd == "off") {
-                client->tickerSub = false;
+                network->ScheduleServerThread([=]() {
+                    client->tickerSub = false;
+                });
             } else {
                 MSG("Usage: !ticker [on|off]");
                 return true;
@@ -137,7 +145,9 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
             MSG("Usage: !ticker [on|off]");
             return true;
         }
-        MSG("Ticker messages %s.", client->tickerSub ? "enabled" : "disabled");
+        network->ScheduleServerThread([=]() {
+            MSG("Ticker messages %s.", client->tickerSub ? "enabled" : "disabled");
+        });
         return true;
     }
 
@@ -196,8 +206,10 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
                 MSG("You are not logged in.");
                 return true;
             }
-            client->logSub = !client->logSub;
-            MSG("Admin logs %s.", client->logSub ? "enabled" : "disabled");
+            network->ScheduleServerThread([=]() {
+                client->logSub = !client->logSub;
+                MSG("Admin logs %s.", client->logSub ? "enabled" : "disabled");
+            });
             return true;
         }
         MSG("Usage: !admin <login|logout|cmd|logs>");
