@@ -164,11 +164,13 @@ public:
 
     void ServerMessage(std::string msg);
     void ServerMessage(sf::Uint32 playerID, std::string msg);
+    sf::Socket::Status SendPacket(Client& client, sf::Packet& packet);
     void SendPacket(sf::Packet& packet);
     void SendPacket(sf::Uint32 playerID, sf::Packet& packet);
     void SendPacketExclude(sf::Uint32 playerID, sf::Packet& packet);
     void SendPacketMap(std::string mapName, sf::Packet& packet);
     void SendPacketMapExclude(std::string mapName, sf::Uint32 playerID, sf::Packet& packet);
+    void SendUDPPacket(Client& client, sf::Packet& packet);
 
     void ListClients();
     bool IsOnWhitelist(std::string name, sf::IpAddress IP);

@@ -252,25 +252,18 @@ void NetworkManager::DisconnectPlayer(Client& c, const std::string reason)
 {
     sf::Packet packet;
     packet << HEADER::DISCONNECT << c.ID;
-    int id = 0;
-    int toErase = -1;
-    for (; id < this->clients.size(); ++id) {
-        auto& client = this->clients[id];
-        if (client.IP != c.IP) {
-            client.tcpSocket->send(packet);
-        } else {
-            GHOST_LOG("Disconnect: '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
-            this->selector.remove(*client.tcpSocket);
-            client.tcpSocket->disconnect();
-            toErase = id;
-        }
-    }
+    SendPacketExclude(c.ID, packet);
+    auto it = std::find_if(this->clients.begin(), this->clients.end(), [&c](const Client& cl) { return cl.ID == c.ID; });
+    if (it == this->clients.end()) return;
 
-    if (toErase != -1) {
-        this->clients.erase(this->clients.begin() + toErase);
-        UI_EVENT("client_change");
-        if (this->alwaysListClients) this->ListClients();
-    }
+    Client& client = *it;
+    GHOST_LOG("Disconnect(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port) + " Reason: " + reason);
+    this->selector.remove(*client.tcpSocket);
+    client.tcpSocket->disconnect();
+
+    this->clients.erase(it);
+    UI_EVENT("client_change");
+    if (this->alwaysListClients) this->ListClients();
 }
 
 void NetworkManager::StartCountdown(const std::string preCommands, const std::string postCommands, const int duration)
@@ -288,9 +281,7 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
     GHOST_LOG("Post-command: " + postCommands);
     sf::Packet packet;
     packet << HEADER::COUNTDOWN << sf::Uint32(0) << sf::Uint8(0) << sf::Uint32(duration) << preCommands << postCommands;
-    for (auto& client : this->clients) {
-        client.tcpSocket->send(packet);
-    }
+    SendPacket(packet);
     if (true) { // TODO: Make this a setting?
         this->SetAccept(true, false);
     }
@@ -375,20 +366,18 @@ void NetworkManager::CheckConnection()
 
     connection_packet >> header >> port >> name >> data >> model_name >> level_name >> TCP_only >> col >> spectator;
 
+    if (name.empty()) {
+        GHOST_LOG("Refused connection from " + client.IP.toString() + ":" + std::to_string(port) + " - no name provided");
+        return;
+    }
+
     if (!(spectator ? this->acceptingSpectators : this->acceptingPlayers)) {
         GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not accepting this type");
         return;
     }
 
-    if (whitelistEnabled) {
-        if (!IsOnWhitelist(name, client.IP)) {
-            GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not on whitelist");
-            return;
-        }
-    }
-
-    if (name.empty()) {
-        GHOST_LOG("Refused connection from " + client.IP.toString() + ":" + std::to_string(port) + " - no name provided");
+    if (!IsOnWhitelist(name, client.IP)) {
+        GHOST_LOG("Refused connection from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - not on whitelist");
         return;
     }
 
@@ -404,27 +393,31 @@ void NetworkManager::CheckConnection()
     client.returnedHeartbeat = true; // Make sure they don't get immediately disconnected; their heartbeat starts on next beat
     client.missedLastHeartbeat = false;
     client.spectator = spectator; // People can break the run when joining in the middle of a run
+    client.admin = false;
 
     this->selector.add(*client.tcpSocket);
 
     sf::Packet packet_new_client;
 
     packet_new_client << client.ID; // Send Client's ID
-    packet_new_client << sf::Uint32(this->clients.size()); // Send every players informations
+    packet_new_client << sf::Uint32(this->clients.size()); // Send every player's information to the new client
     for (auto& c : this->clients) {
         packet_new_client << c.ID << c.name.c_str() << c.data << c.modelName.c_str() << c.currentMap.c_str() << c.color << c.spectator;
     }
 
-    client.tcpSocket->send(packet_new_client);
-
-    sf::Packet packet_notify_all; // Notify every players of a new connection
-    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color << client.spectator;
-
-    for (auto& c : this->clients) {
-        c.tcpSocket->send(packet_notify_all);
+    auto status = client.tcpSocket->send(packet_new_client);
+    if (status != sf::Socket::Status::Done) {
+        GHOST_LOG("Connection failed from " + name + " (" + (spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(port) + " - status " + std::to_string(status));
+        this->selector.remove(*client.tcpSocket);
+        client.tcpSocket->disconnect();
+        return;
     }
 
-    GHOST_LOG("Connection: '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
+    sf::Packet packet_notify_all; // Notify every player of a new connection
+    packet_notify_all << HEADER::CONNECT << client.ID << client.name.c_str() << client.data << client.modelName.c_str() << client.currentMap.c_str() << client.color << client.spectator;
+    SendPacket(packet_notify_all);
+
+    GHOST_LOG("Connection(" + std::to_string(client.ID) + "): '" + client.name + "' (" + (client.spectator ? "spectator" : "player") + ") @ " + client.IP.toString() + ":" + std::to_string(client.port));
 
     this->clients.push_back(std::move(client));
 
@@ -508,7 +501,7 @@ void NetworkManager::Treat(sf::Packet& packet, sf::IpAddress ip, unsigned short 
     case HEADER::COUNTDOWN: {
         sf::Packet packet_confirm;
         packet_confirm << HEADER::COUNTDOWN << sf::Uint32(0) << sf::Uint8(1);
-        client->tcpSocket->send(packet_confirm);
+        SendPacket(ID, packet_confirm);
         break;
     }
     case HEADER::SPEEDRUN_FINISH: {
@@ -571,23 +564,30 @@ void NetworkManager::ServerMessage(std::string msg) {
     GHOST_LOG(std::string("[server message] ") + msg);
     sf::Packet packet;
     packet << HEADER::MESSAGE << sf::Uint32(0) << msg;
-    this->SendPacket(packet);
+    SendPacket(packet);
 }
 void NetworkManager::ServerMessage(sf::Uint32 playerID, std::string msg) {
     sf::Packet packet;
     packet << HEADER::MESSAGE << sf::Uint32(0) << msg;
-    this->SendPacket(playerID, packet);
+    SendPacket(playerID, packet);
 }
 
+sf::Socket::Status NetworkManager::SendPacket(Client& client, sf::Packet& packet) {
+    auto status = client.tcpSocket->send(packet);
+    if (status != sf::Socket::Status::Done) {
+        GHOST_LOG("Failed to send packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
+    }
+    return status;
+}
 void NetworkManager::SendPacket(sf::Packet& packet) {
     for (auto &client : this->clients) {
-        client.tcpSocket->send(packet);
+        SendPacket(client, packet);
     }
 }
 void NetworkManager::SendPacket(sf::Uint32 playerID, sf::Packet& packet) {
     for (auto &client : this->clients) {
         if (client.ID == playerID) {
-            client.tcpSocket->send(packet);
+            SendPacket(client, packet);
             break;
         }
     }
@@ -595,22 +595,28 @@ void NetworkManager::SendPacket(sf::Uint32 playerID, sf::Packet& packet) {
 void NetworkManager::SendPacketExclude(sf::Uint32 playerID, sf::Packet& packet) {
     for (auto &client : this->clients) {
         if (client.ID != playerID) {
-            client.tcpSocket->send(packet);
+            SendPacket(client, packet);
         }
     }
 }
 void NetworkManager::SendPacketMap(std::string mapName, sf::Packet& packet) {
     for (auto &client : this->clients) {
         if (client.currentMap == mapName) {
-            client.tcpSocket->send(packet);
+            SendPacket(client, packet);
         }
     }
 }
 void NetworkManager::SendPacketMapExclude(std::string mapName, sf::Uint32 playerID, sf::Packet& packet) {
     for (auto &client : this->clients) {
         if (client.currentMap == mapName && client.ID != playerID) {
-            client.tcpSocket->send(packet);
+            SendPacket(client, packet);
         }
+    }
+}
+void NetworkManager::SendUDPPacket(Client& client, sf::Packet& packet) {
+    auto status = udpSocket.send(packet, client.IP, client.port);
+    if (status != sf::Socket::Status::Done) {
+        GHOST_LOG("Failed to send UDP packet to " + client.name + " (" + client.IP.toString() + ":" + std::to_string(client.port) + ") - status " + std::to_string(status));
     }
 }
 
@@ -634,7 +640,7 @@ void NetworkManager::RunServer()
                 if (!client.TCP_only) {
                     sf::Packet packet;
                     packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(0);
-                    this->udpSocket.send(packet, client.IP, client.port);
+                    SendUDPPacket(client, packet);
                 }
             }
             lastHeartbeatUdp = now;
@@ -650,9 +656,9 @@ void NetworkManager::RunServer()
             }
             for (auto &client : this->clients) {
                 if (client.TCP_only) {
-                    client.tcpSocket->send(packet);
+                    SendPacket(client, packet);
                 } else {
-                    this->udpSocket.send(packet, client.IP, client.port);
+                    SendUDPPacket(client, packet);
                 }
             }
             lastUpdate = now;
@@ -715,8 +721,6 @@ void NetworkManager::RunServer()
 
 void NetworkManager::DoHeartbeats()
 {
-    // We don't disconnect clients in the loop; else, the loop will have
-    // UB
     for (size_t i = 0; i < this->clients.size(); ++i) {
         auto &client = this->clients[i];
         if (!client.returnedHeartbeat && client.missedLastHeartbeat) {
@@ -730,7 +734,7 @@ void NetworkManager::DoHeartbeats()
             client.returnedHeartbeat = false;
             sf::Packet packet;
             packet << HEADER::HEART_BEAT << sf::Uint32(client.ID) << sf::Uint32(client.heartbeatToken);
-            if (client.tcpSocket->send(packet) == sf::Socket::Disconnected) {
+            if (client.tcpSocket->send(packet) == sf::Socket::Status::Disconnected) {
                 this->DisconnectPlayer(client, "socket died");
                 --i;
             }
@@ -756,6 +760,7 @@ void NetworkManager::ListClients() {
 }
 
 bool NetworkManager::IsOnWhitelist(std::string name, sf::IpAddress IP) {
+    if (!whitelistEnabled) return true;
     if (whitelist.empty()) return false;
 
     auto index = std::find_if(whitelist.begin(), whitelist.end(), [&name, &IP](const WhitelistEntry& entry) {
