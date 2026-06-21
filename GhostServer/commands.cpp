@@ -32,13 +32,7 @@ std::string ssprintf(const char *fmt, ...) {
 	return str;
 }
 
-#ifdef GHOST_GUI
-# define LINE(x, ...) emit network->OnNewEvent(QString::fromStdString(ssprintf(x, ##__VA_ARGS__)))
-# define LINE_NONL(x) emit network->OnNewEvent(QString::fromStdString(ssprintf(x)))
-#else
-# define LINE(x, ...) printf(x "\n", ##__VA_ARGS__)
-# define LINE_NONL(x) (fputs(x, stdout), fflush(stdout))
-#endif
+#define LINE(x, ...) network->Log(ssprintf(x, ##__VA_ARGS__))
 
 
 // TODO: save bans/whitelist to disk
