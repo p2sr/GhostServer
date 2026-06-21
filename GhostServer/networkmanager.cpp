@@ -285,6 +285,9 @@ void NetworkManager::StartCountdown(const std::string preCommands, const std::st
     if (true) { // TODO: Make this a setting?
         this->SetAccept(true, false);
     }
+    for (auto &client : this->clients) {
+        client.ready = false;
+    }
 }
 
 void NetworkManager::SetAccept(bool players, bool allow)
