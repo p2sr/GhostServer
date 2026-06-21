@@ -143,7 +143,7 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
 
     if (cmd == "admin") {
         if (args.size() < 2) {
-            MSG("Usage: !admin <login|logout|cmd>");
+            MSG("Usage: !admin <login|logout|cmd|logs>");
             return true;
         }
 
@@ -191,8 +191,16 @@ bool handle_chat_cmd(NetworkManager *network, sf::Uint32 playerID, const std::st
             handle_cmd(network, const_cast<char*>(command.c_str()));
             MSG("Executed command: '%s'", command.c_str());
             return true;
+        } else if (subcmd == "logs") {
+            if (!client->admin) {
+                MSG("You are not logged in.");
+                return true;
+            }
+            client->logSub = !client->logSub;
+            MSG("Admin logs %s.", client->logSub ? "enabled" : "disabled");
+            return true;
         }
-        MSG("Usage: !admin <login|logout|cmd>");
+        MSG("Usage: !admin <login|logout|cmd|logs>");
         return true;
     }
 

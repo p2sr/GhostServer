@@ -822,6 +822,11 @@ void NetworkManager::SetReady(sf::Uint32 playerID, bool ready) {
 }
 
 void NetworkManager::Log(const std::string& message) {
+    for (auto &client : this->clients) {
+        if (client.admin && client.logSub) {
+            ServerMessage(client.ID, message);
+        }
+    }
     GHOST_LOG(message);
 }
 

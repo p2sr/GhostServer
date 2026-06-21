@@ -70,6 +70,7 @@ struct Client {
     bool ready = false;
     bool tickerSub = true; // subscribed to ticker
     bool admin = false;
+    bool logSub = false; // subscribed to server admin logs
 };
 
 enum class WhitelistEntryType {
