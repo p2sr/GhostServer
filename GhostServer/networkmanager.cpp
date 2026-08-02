@@ -355,7 +355,12 @@ void NetworkManager::CheckConnection()
     }
     
     sf::Packet connection_packet;
-    client.tcpSocket->receive(connection_packet);
+    client.tcpSocket->setBlocking(false);
+    if (client.tcpSocket->receive(connection_packet) != sf::Socket::Done) {
+        this->Log("Connection failed from " + client.IP.toString() + " - no connection packet received");
+        return;
+    }
+    client.tcpSocket->setBlocking(true);
 
     HEADER header;
     unsigned short int port;
@@ -670,7 +675,6 @@ void NetworkManager::RunServer()
             if (logChannels & 0b100) {
                 this->Log(">>> UPDATE >>>");
             }
-            // too frequent to log, it'll spam
             // Send bulk update packet
             sf::Packet packet;
             packet << HEADER::UPDATE << sf::Uint32(0) << sf::Uint32(this->clients.size());
